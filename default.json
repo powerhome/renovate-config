@@ -1,0 +1,7 @@
+{
+    "extends": [
+        "config:base",
+        "powerhome/renovate-config:ci-kubed-versioning",
+        "powerhome/renovate-config:use-internal-registry"
+    ]
+}

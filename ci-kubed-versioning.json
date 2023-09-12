@@ -1,0 +1,14 @@
+{
+    "regexManagers": [
+        {
+            "fileMatch": [
+                "^Jenkinsfile$"
+            ],
+            "matchStrings": [
+                "library 'github.com/powerhome/ci-kubed@(?<currentValue>.*?)'"
+            ],
+            "datasourceTemplate": "github-releases",
+            "depNameTemplate": "powerhome/ci-kubed"
+        }
+    ]
+}
