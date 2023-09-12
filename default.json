@@ -1,0 +1,7 @@
+{
+    "extends": [
+        "config:base",
+        "The-Outsider-Renaissance/renovate-config:ci-kubed-versioning",
+        "The-Outsider-Renaissance/renovate-config:use-internal-registry"
+    ]
+}
