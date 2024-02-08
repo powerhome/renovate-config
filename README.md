@@ -16,6 +16,11 @@ Allows Renovate usage of Power's npm-registry.
 
 Usage: `"extends": ["github>powerhome/renovate-config:use-internal-registry"]`
 
+## krane-templates-image-versions
+Allows Renovate to manage versions of Docker images references in .yaml.erb template files used by Krane.
+
+Usage: `"extends": ["github>powerhome/renovate-config:krane-templates-image-versions"]`
+
 ## dockerfile-dep-versions
 Allows Renovate to update specifically labeled dependency specifications in Dockerfiles.
 
