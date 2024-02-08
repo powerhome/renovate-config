@@ -3,6 +3,6 @@
         "config:base",
         "powerhome/renovate-config:ci-kubed-versioning",
         "powerhome/renovate-config:use-internal-registry",
-        "powerhome/krane-templates-image-versions"
+        "powerhome/renovate-config:krane-templates-image-versions"
     ]
 }
