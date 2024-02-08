@@ -4,14 +4,53 @@ Renovate configuration presets for Power organization
 ## default
 Base configuration that inherits multiple different configurations.
 
-Usage: `"extends": ["github>powerhome/renovate-config"]``
+Usage: `"extends": ["github>powerhome/renovate-config"]`
 
 ## ci-kubed-versioning
 Allows Renovate the ability to bump ci-kubed versions in Jenkinsfiles.
 
-Usage: `"extends": ["github>powerhome/renovate-config:ci-kubed-versioning"]``
+Usage: `"extends": ["github>powerhome/renovate-config:ci-kubed-versioning"]`
 
 ## use-internal-registry
 Allows Renovate usage of Power's npm-registry.
 
-Usage: `"extends": ["github>powerhome/renovate-config:use-internal-registry"]``
+Usage: `"extends": ["github>powerhome/renovate-config:use-internal-registry"]`
+
+## dockerfile-dep-versions
+Allows Renovate to update specifically labeled dependency specifications in Dockerfiles.
+
+Usage: `"extends": ["github>powerhome/renovate-config:dockerfile-dep-versions"]`
+
+Dockerfile syntax example:
+
+```Dockerfile
+FROM ruby:3.3.0-slim-bullseye AS base
+
+# renovate: datasource=rubygems depName=bundler
+ARG BUNDLER_VERSION=2.5.4
+# renovate: datasource=github-releases depName=rubygems/rubygems
+ARG RUBYGEMS_VERSION=3.5.4
+RUN gem install bundler -v $BUNDLER_VERSION && \
+    gem update --system $RUBYGEMS_VERSION
+
+# renovate: datasource=github-releases depName=nvm-sh/nvm
+ENV NVM_VERSION 0.39.1
+# renovate: datasource=node-version depName=node versioning=node
+ENV NODE_VERSION 20.9.0
+# renovate: datasource=npm depName=npm
+ENV NPM_VERSION 7.24.2
+# renovate: datasource=npm depName=yarn
+ENV YARN_VERSION 1.22.17
+ENV NVM_DIR /home/app/.nvm
+ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+RUN mkdir $NVM_DIR \
+    && curl -o- https://raw.githubusercontent.com/creationix/nvm/v${NVM_VERSION}/install.sh | bash \
+    && . $NVM_DIR/nvm.sh \
+    && nvm install v${NODE_VERSION} \
+    && nvm alias default v${NODE_VERSION} \
+    && nvm use default \
+    && npm install -g npm@${NPM_VERSION} \
+    && npm install -g yarn@${YARN_VERSION} \
+    && curl -sSL https://nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-headers.tar.gz -o /tmp/node-headers.tgz \
+    && npm config set tarball /tmp/node-headers.tgz
+```
