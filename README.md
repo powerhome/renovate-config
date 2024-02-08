@@ -33,12 +33,12 @@ FROM ruby:3.3.0-slim-bullseye AS base
 
 # renovate: datasource=rubygems depName=bundler
 ARG BUNDLER_VERSION=2.5.4
-# renovate: datasource=github-releases depName=rubygems/rubygems
+# renovate: datasource=github-releases depName=rubygems lookupName=rubygems/rubygems versioning=ruby extractVersion=^v(?<version>.*)$
 ARG RUBYGEMS_VERSION=3.5.4
 RUN gem install bundler -v $BUNDLER_VERSION && \
     gem update --system $RUBYGEMS_VERSION
 
-# renovate: datasource=github-releases depName=nvm-sh/nvm
+# renovate: datasource=github-releases depName=nvm lookupName=nvm-sh/nvm extractVersion=^v(?<version>.*)$
 ENV NVM_VERSION 0.39.1
 # renovate: datasource=node-version depName=node versioning=node
 ENV NODE_VERSION 20.9.0
