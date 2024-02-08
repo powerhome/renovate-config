@@ -1,0 +1,14 @@
+{
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "(^|/).*\\.ya?ml\\.erb$"
+      ],
+      "matchStrings": [
+        "image: (?<depName>.*):(?<currentValue>.*)"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ]
+}
