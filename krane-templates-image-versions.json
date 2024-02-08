@@ -1,14 +1,8 @@
 {
-  "customManagers": [
-    {
-      "customType": "regex",
-      "fileMatch": [
-        "(^|/).*\\.ya?ml\\.erb$"
-      ],
-      "matchStrings": [
-        "image: (?<depName>.*):(?<currentValue>.*)"
-      ],
-      "datasourceTemplate": "docker"
-    }
-  ]
+  "kubernetes": {
+    "fileMatch": [
+      "config/deploy/.+\\.ya?ml\\.erb$",
+      "deploy/.+\\.ya?ml\\.erb$"
+    ]
+  }
 }

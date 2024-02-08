@@ -19,6 +19,8 @@ Usage: `"extends": ["github>powerhome/renovate-config:use-internal-registry"]`
 ## krane-templates-image-versions
 Allows Renovate to manage versions of Docker images references in .yaml.erb template files used by Krane.
 
+The templates must be stored in `config/deploy/` or `deploy/` directories to be detected.
+
 Usage: `"extends": ["github>powerhome/renovate-config:krane-templates-image-versions"]`
 
 ## dockerfile-dep-versions
