@@ -6,6 +6,11 @@ Base configuration that inherits multiple different configurations.
 
 Usage: `"extends": ["github>powerhome/renovate-config"]`
 
+## temporary-fixes
+A collection of temporary fixes, like restrictions on package versions, where these are known to be broken and affect multiple apps.
+
+Usage: `"extends": ["github>powerhome/renovate-config:temporary-fixes"]`
+
 ## ci-kubed-versioning
 Allows Renovate the ability to bump ci-kubed versions in Jenkinsfiles.
 

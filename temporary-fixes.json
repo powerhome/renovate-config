@@ -1,0 +1,10 @@
+{
+  "packageRules": [
+    {
+      "matchManagers": ["bundler"],
+      "matchPackageNames": ["mysql2"],
+      "allowedVersions": "<=0.5.6",
+      "description": "Departure not compatible: https://github.com/departurerb/departure/issues/107"
+    }
+  ]
+}
