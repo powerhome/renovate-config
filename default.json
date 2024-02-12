@@ -8,9 +8,5 @@
         "powerhome/renovate-config:krane-templates-image-versions",
         "powerhome/renovate-config:dockerfile-dep-versions"
     ],
-    "addLabels": [
-        "dependencies"
-    ],
-    "rangeStrategy": "pin",
     "timezone": "America/New_York"
 }
