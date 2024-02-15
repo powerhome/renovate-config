@@ -14,6 +14,7 @@
     {
       "matchPackageNames": ["percona/percona-xtradb-cluster-operator"],
       "allowedVersions": "<1.13.0",
+      "versionCompatibility": "^(?<version>[^-]+)(?<compatibility>-.*)?$",
       "description": "v1.13 is only tested on k8s > 1.24, while PAC uses 1.22: https://docs.percona.com/percona-operator-for-mysql/pxc/ReleaseNotes/Kubernetes-Operator-for-PXC-RN1.13.0.html#supported-platforms"
     }
   ]
