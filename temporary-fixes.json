@@ -1,12 +1,6 @@
 {
   "packageRules": [
     {
-      "matchManagers": ["bundler"],
-      "matchPackageNames": ["mysql2"],
-      "allowedVersions": "<=0.5.5",
-      "description": "Departure not compatible: https://github.com/departurerb/departure/issues/107"
-    },
-    {
       "matchPackageNames": ["percona/percona-xtradb-cluster-operator"],
       "allowedVersions": "<1.13.0",
       "versionCompatibility": "^(?<version>[^-]+)(?<compatibility>-.*)?$",
