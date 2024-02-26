@@ -1,11 +1,6 @@
 {
   "packageRules": [
     {
-      "matchPackageNames": ["powerhome/redis-operator"],
-      "allowedVersions": "<2.0.1",
-      "description": "Dangerous upgrade behaviour: https://github.com/powerhome/redis-operator/issues/48"
-    },
-    {
       "matchPackageNames": ["percona/percona-xtradb-cluster-operator"],
       "allowedVersions": "<1.13.0",
       "versionCompatibility": "^(?<version>[^-]+)(?<compatibility>-.*)?$",
