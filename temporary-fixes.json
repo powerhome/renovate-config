@@ -4,6 +4,11 @@
       "matchPackageNames": ["grafana/grafana"],
       "allowedVersions": "<10.4.3",
       "description": "See https://github.com/powerhome/pac/pull/1983"
+    },
+    {
+      "matchPackageNames": ["ghcr.io/grafana/grafana-operator"],
+      "allowedVersions": "<5.9.0",
+      "description": "See https://github.com/powerhome/pac/pull/1983"
     }
   ]
 }
