@@ -1,3 +1,9 @@
 {
-  "packageRules": []
+  "packageRules": [
+    {
+      "matchPackageNames": ["grafana/grafana"],
+      "allowedVersions": "<10.4.3",
+      "description": "See https://github.com/powerhome/pac/pull/1983"
+    }
+  ]
 }
