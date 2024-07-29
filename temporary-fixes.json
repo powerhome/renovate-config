@@ -7,8 +7,8 @@
     },
     {
       "matchPackageNames": ["ghcr.io/grafana/grafana-operator"],
-      "allowedVersions": "<5.9.0",
-      "description": "See https://github.com/powerhome/pac/pull/1983"
+      "allowedVersions": "<5.8.1",
+      "description": "See https://github.com/powerhome/pac/pull/1983 and https://github.com/grafana/grafana-operator/pull/1500"
     }
   ]
 }
