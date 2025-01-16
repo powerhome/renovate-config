@@ -66,3 +66,10 @@ RUN mkdir $NVM_DIR \
     && curl -sSL https://nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-headers.tar.gz -o /tmp/node-headers.tgz \
     && npm config set tarball /tmp/node-headers.tgz
 ```
+
+## add-labels
+Adds standard label(s) to Renovate PRs.
+
+Adding the "dependencies" label will make the PRs created by Renovate exempt from the [stalebot](https://github.com/powerhome/software/blob/main/modules/github-repo/stale.yml.tpl) pruning process that is configured in all of the Power repositories.
+
+Usage: `"extends": ["github>powerhome/renovate-config:add-labels"]`
