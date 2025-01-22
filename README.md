@@ -73,3 +73,10 @@ Adds standard label(s) to Renovate PRs.
 Adding the "dependencies" label will make the PRs created by Renovate exempt from the [stalebot](https://github.com/powerhome/software/blob/main/modules/github-repo/stale.yml.tpl) pruning process that is configured in all of the Power repositories.
 
 Usage: `"extends": ["github>powerhome/renovate-config:add-labels"]`
+
+## ignore-stalebot-action
+Ignores Renovate PRs that are created by the updates to the [stalebot](https://github.com/powerhome/software/blob/main/modules/github-repo/stale.yml.tpl) action.
+
+This ensures that Stalebot updates won't be created by Renovate, bringing repos out of compliance with the Software repo's state.
+
+Usage: `"extends": ["github>powerhome/renovate-config:ignore-stalebot-action"]`
