@@ -29,6 +29,8 @@ jobs:
 
       - name: Update Percona digests
         id: update-digests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION_ARG=""
           if [ -n "${{ github.event.inputs.version }}" ]; then
@@ -38,13 +40,13 @@ jobs:
           # Run our custom script
           ./bin/update_percona_digests.rb $VERSION_ARG
 
-          # Check if renovate.json was actually changed
-          if git diff --quiet renovate.json; then
+          # Check if percona-versions.json was actually changed
+          if git diff --quiet percona-versions.json; then
             echo "changed=false" >> $GITHUB_OUTPUT
-            echo "No changes needed to renovate.json"
+            echo "No changes needed to percona-versions.json"
           else
             echo "changed=true" >> $GITHUB_OUTPUT
-            echo "renovate.json has been updated"
+            echo "percona-versions.json has been updated"
 
             # Get the version that was processed
             VERSION=$(git log -1 --pretty=format:"%s" | grep -oP 'v\K[0-9]+\.[0-9]+\.[0-9]+' || echo "unknown")
@@ -64,7 +66,7 @@ jobs:
             This PR automatically updates the Renovate configuration with certified image digests from Percona Operator for MySQL v${{ steps.update-digests.outputs.version }}.
 
             ### Changes
-            - Updated `renovate.json` with latest certified image digests
+            - Updated `percona-versions.json` with latest certified image digests
             - Source: https://docs.percona.com/percona-operator-for-mysql/pxc/ReleaseNotes/Kubernetes-Operator-for-PXC-RN${{ steps.update-digests.outputs.version }}.html
 
             ### Review Checklist

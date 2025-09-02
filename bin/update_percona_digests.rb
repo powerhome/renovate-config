@@ -35,27 +35,55 @@ class PerconaDigestUpdater
   private
 
   def fetch_latest_version
-    uri = URI("#{@base_url}/")
-    response = Net::HTTP.get_response(uri)
+    github_api_url = "https://api.github.com/repos/percona/percona-xtradb-cluster-operator/releases"
+    uri = URI(github_api_url)
+    
+    puts "Fetching latest release from GitHub API..."
+    
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    
+    request = Net::HTTP::Get.new(uri)
+    request['Accept'] = 'application/vnd.github.v3+json'
+    request['User-Agent'] = 'renovate-config-updater'
+    
+    # Use GitHub token if available for better rate limiting
+    if ENV['GITHUB_TOKEN']
+      request['Authorization'] = "token #{ENV['GITHUB_TOKEN']}"
+    end
+    
+    response = http.request(request)
 
     if response.code != '200'
-      puts "ERROR: Failed to fetch release notes index"
+      puts "ERROR: Failed to fetch GitHub releases (HTTP #{response.code})"
+      puts "Response: #{response.body}"
       exit 1
     end
 
-    versions = response.body.scan(/Kubernetes-Operator-for-PXC-RN(\d+\.\d+\.\d+)\.html/)
-                          .flatten
-                          .map { |v| Gem::Version.new(v) }
-                          .sort
-
-    if versions.empty?
-      puts "ERROR: Could not find any versions in release notes"
+    releases = JSON.parse(response.body)
+    
+    if releases.empty?
+      puts "ERROR: No releases found on GitHub"
       exit 1
     end
 
-    latest = versions.last.to_s
-    puts "Latest Percona version: #{latest}"
-    latest
+    # Filter out prerelease/beta versions and find the latest stable release
+    stable_releases = releases.reject { |release| release['prerelease'] || release['draft'] }
+    
+    if stable_releases.empty?
+      puts "ERROR: No stable releases found on GitHub"
+      exit 1
+    end
+
+    # Extract version from tag_name (e.g., "v1.18.0" -> "1.18.0")
+    latest_release = stable_releases.first
+    tag_name = latest_release['tag_name']
+    version = tag_name.gsub(/^v/, '') # Remove 'v' prefix if present
+    
+    puts "Latest stable Percona version from GitHub: #{version}"
+    puts "Release date: #{latest_release['published_at']}"
+    
+    version
   end
 
   def fetch_release_notes
