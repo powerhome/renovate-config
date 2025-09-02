@@ -1,0 +1,88 @@
+name: Update Percona Certified Digests
+
+on:
+  schedule:
+    - cron: '0 10 * * 1'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Specific Percona version to check (e.g., 1.18.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-percona-digests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+          bundler-cache: false
+
+      - name: Update Percona digests
+        id: update-digests
+        run: |
+          VERSION_ARG=""
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION_ARG="--version ${{ github.event.inputs.version }}"
+          fi
+
+          # Run our custom script
+          ./bin/update_percona_digests.rb $VERSION_ARG
+
+          # Check if renovate.json was actually changed
+          if git diff --quiet renovate.json; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes needed to renovate.json"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "renovate.json has been updated"
+
+            # Get the version that was processed
+            VERSION=$(git log -1 --pretty=format:"%s" | grep -oP 'v\K[0-9]+\.[0-9]+\.[0-9]+' || echo "unknown")
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.update-digests.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update Percona certified digests to v${{ steps.update-digests.outputs.version }}"
+          title: "Update Percona certified digests to v${{ steps.update-digests.outputs.version }}"
+          body: |
+            ## Automated Percona Digest Update
+
+            This PR automatically updates the Renovate configuration with certified image digests from Percona Operator for MySQL v${{ steps.update-digests.outputs.version }}.
+
+            ### Changes
+            - Updated `renovate.json` with latest certified image digests
+            - Source: https://docs.percona.com/percona-operator-for-mysql/pxc/ReleaseNotes/Kubernetes-Operator-for-PXC-RN${{ steps.update-digests.outputs.version }}.html
+
+            ### Review Checklist
+            - [ ] Verify the digests match the official Percona release notes
+            - [ ] Check that all required Percona images are included
+            - [ ] Confirm version patterns are correct
+
+            **Note**: This is an automated update. Please review carefully before merging.
+          branch: "update-percona-digests-${{ steps.update-digests.outputs.version }}"
+          delete-branch: true
+
+      - name: Output summary
+        run: |
+          echo "## Percona Digest Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.update-digests.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Changed**: ${{ steps.update-digests.outputs.changed }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.update-digests.outputs.changed }}" = "true" ]; then
+            echo "- **Action**: Created PR with updated digests" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Action**: No changes needed" >> $GITHUB_STEP_SUMMARY
+          fi

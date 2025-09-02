@@ -8,7 +8,9 @@
         "powerhome/renovate-config:krane-templates-image-versions",
         "powerhome/renovate-config:dockerfile-dep-versions",
         "powerhome/renovate-config:add-labels",
-        "powerhome/renovate-config:ignore-stalebot-action"
+        "powerhome/renovate-config:ignore-stalebot-action",
+        "powerhome/renovate-config:percona-versions"
+
     ],
     "rangeStrategy": "pin",
     "timezone": "America/New_York"
