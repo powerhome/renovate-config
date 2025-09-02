@@ -5,8 +5,7 @@
       "description": "Group all Percona PostgreSQL-related dependencies together",
       "labels": [
         "dependencies",
-        "milano",
-        "percona-postgresql-upgrades"
+        "percona-upgrades"
       ],
       "matchPackageNames": [
         "/^percona\\/.*postgresql.*//",
