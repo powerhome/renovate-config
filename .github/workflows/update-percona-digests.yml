@@ -60,8 +60,8 @@ jobs:
 
           # Check if any config files were changed
           CHANGED_FILES=""
-          if ! git diff --quiet percona-versions.json; then
-            CHANGED_FILES="$CHANGED_FILES percona-versions.json"
+          if ! git diff --quiet percona-pxc-versions.json; then
+            CHANGED_FILES="$CHANGED_FILES percona-pxc-versions.json"
           fi
           if ! git diff --quiet percona-postgresql-versions.json; then
             CHANGED_FILES="$CHANGED_FILES percona-postgresql-versions.json"

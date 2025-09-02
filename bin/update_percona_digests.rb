@@ -11,7 +11,7 @@ class PerconaDigestUpdater
       github_repo: 'percona/percona-xtradb-cluster-operator',
       docs_base_url: 'https://docs.percona.com/percona-operator-for-mysql/pxc/ReleaseNotes',
       docs_pattern: 'Kubernetes-Operator-for-PXC-RN%s.html',
-      config_file: 'percona-versions.json'
+      config_file: 'percona-pxc-versions.json'
     },
     'postgresql' => {
       github_repo: 'percona/percona-postgresql-operator',
