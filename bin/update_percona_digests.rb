@@ -6,14 +6,32 @@ require 'json'
 require 'optparse'
 
 class PerconaDigestUpdater
-  def initialize(version = nil)
+  OPERATORS = {
+    'pxc' => {
+      github_repo: 'percona/percona-xtradb-cluster-operator',
+      docs_base_url: 'https://docs.percona.com/percona-operator-for-mysql/pxc/ReleaseNotes',
+      docs_pattern: 'Kubernetes-Operator-for-PXC-RN%s.html',
+      config_file: 'percona-versions.json'
+    },
+    'postgresql' => {
+      github_repo: 'percona/percona-postgresql-operator',
+      docs_base_url: 'https://docs.percona.com/percona-operator-for-postgresql/2.0/ReleaseNotes',
+      docs_pattern: 'Kubernetes-Operator-for-PostgreSQL-RN%s.html',
+      config_file: 'percona-postgresql-versions.json'
+    }
+  }.freeze
+
+  def initialize(operator = 'pxc', version = nil)
+    @operator = operator
+    @config = OPERATORS[@operator]
+    raise "Unsupported operator: #{@operator}. Supported: #{OPERATORS.keys.join(', ')}" unless @config
+    
     @version = version || fetch_latest_version
-    @base_url = "https://docs.percona.com/percona-operator-for-mysql/pxc/ReleaseNotes"
-    @release_notes_url = "#{@base_url}/Kubernetes-Operator-for-PXC-RN#{@version}.html"
+    @release_notes_url = "#{@config[:docs_base_url]}/#{@config[:docs_pattern] % @version}"
   end
 
   def run
-    puts "Processing Percona Operator for MySQL v#{@version}"
+    puts "Processing Percona #{@operator.upcase} Operator v#{@version}"
 
     release_content = fetch_release_notes
     images = parse_certified_images(release_content)
@@ -27,7 +45,7 @@ class PerconaDigestUpdater
     images.each { |name, versions| puts "  #{name}: #{versions.keys.join(', ')}" }
 
     update_renovate_config(images)
-    puts "Successfully updated percona-versions.json"
+    puts "Successfully updated #{@config[:config_file]}"
 
     images
   end
@@ -35,10 +53,10 @@ class PerconaDigestUpdater
   private
 
   def fetch_latest_version
-    github_api_url = "https://api.github.com/repos/percona/percona-xtradb-cluster-operator/releases"
+    github_api_url = "https://api.github.com/repos/#{@config[:github_repo]}/releases"
     uri = URI(github_api_url)
     
-    puts "Fetching latest release from GitHub API..."
+    puts "Fetching latest release from GitHub API for #{@config[:github_repo]}..."
     
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
@@ -133,10 +151,10 @@ class PerconaDigestUpdater
   end
 
   def update_renovate_config(images)
-    renovate_path = 'percona-versions.json'
+    renovate_path = @config[:config_file]
 
     unless File.exist?(renovate_path)
-      puts "ERROR: percona-versions.json not found"
+      puts "ERROR: #{renovate_path} not found"
       exit 1
     end
 
@@ -194,20 +212,24 @@ class PerconaDigestUpdater
 
       # Determine latest version using version comparison
       latest_version = versions.keys.sort_by { |v|
-        # Handle version formats like "8.0.42-33.1", "2.8.15", "3.3.1"
+        # Handle version formats like "8.0.42-33.1", "2.8.15", "3.3.1", "2.7.0-ppg17.5.2-postgres-gis3.3.8"
+        # Split on non-alphanumeric characters and convert numbers to integers for proper sorting
         parts = v.split(/[-.]/).map do |part|
           if part.match(/^\d+$/)
             part.to_i
           else
+            # For non-numeric parts, use original string but sort numerically if possible
             part
           end
         end
 
-        while parts.length < 6
+        # Pad with zeros to ensure consistent comparison length
+        while parts.length < 10
           parts << 0
         end
 
-        parts
+        # Convert non-numeric strings to sortable format
+        parts.map { |p| p.is_a?(String) ? [1, p] : [0, p] }
       }.last
 
       configs[image_name] = {
@@ -222,9 +244,14 @@ class PerconaDigestUpdater
 end
 
 if __FILE__ == $0
-  options = {}
+  options = { operator: 'pxc' }
   OptionParser.new do |opts|
     opts.banner = "Usage: #{$0} [options]"
+
+    opts.on("-o", "--operator OPERATOR", "Operator to process (pxc, postgresql, or all)", 
+            "Available: #{PerconaDigestUpdater::OPERATORS.keys.join(', ')}") do |o|
+      options[:operator] = o
+    end
 
     opts.on("-v", "--version VERSION", "Specific Percona version to process") do |v|
       options[:version] = v
@@ -236,6 +263,14 @@ if __FILE__ == $0
     end
   end.parse!
 
-  updater = PerconaDigestUpdater.new(options[:version])
-  updater.run
+  if options[:operator] == 'all'
+    PerconaDigestUpdater::OPERATORS.keys.each do |operator|
+      puts "\n" + "="*50
+      updater = PerconaDigestUpdater.new(operator, options[:version])
+      updater.run
+    end
+  else
+    updater = PerconaDigestUpdater.new(options[:operator], options[:version])
+    updater.run
+  end
 end
