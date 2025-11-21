@@ -3,6 +3,10 @@
       {
         "matchPackageNames": ["reviewdog/action-brakeman", "reviewdog/action-setup"],
         "enabled": false
+      },
+      {
+        "matchFileNames": [".github/workflows/reviewdog.yml"],
+        "enabled": false
       }
     ]
   }
