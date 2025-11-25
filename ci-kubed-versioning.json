@@ -10,5 +10,13 @@
             "datasourceTemplate": "github-releases",
             "depNameTemplate": "powerhome/ci-kubed"
         }
+    ],
+    "packageRules": [
+        {
+            "matchManagers": ["regex"],
+            "matchDepNames": ["powerhome/ci-kubed"],
+            "prHourlyLimit": 0,
+            "prConcurrentLimit": 0
+        }
     ]
 }
