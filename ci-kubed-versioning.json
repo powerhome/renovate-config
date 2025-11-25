@@ -13,8 +13,9 @@
     ],
     "packageRules": [
         {
-            "matchManagers": ["regex"],
+            "matchManagers": ["custom.regex"],
             "matchDepNames": ["powerhome/ci-kubed"],
+            "groupName": null,
             "prHourlyLimit": 0,
             "prConcurrentLimit": 0
         }
