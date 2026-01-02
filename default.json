@@ -9,6 +9,8 @@
         "powerhome/renovate-config:dockerfile-dep-versions",
         "powerhome/renovate-config:add-labels",
         "powerhome/renovate-config:ignore-stalebot-action",
+        "powerhome/renovate-config:percona-pxc-versions",
+        "powerhome/renovate-config:percona-postgresql-versions",
         "powerhome/renovate-config:ignore-reviewdog-action"
     ],
     "rangeStrategy": "pin",
