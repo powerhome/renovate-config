@@ -80,3 +80,10 @@ Ignores Renovate PRs that are created by the updates to the [stalebot](https://g
 This ensures that Stalebot updates won't be created by Renovate, bringing repos out of compliance with the Software repo's state.
 
 Usage: `"extends": ["github>powerhome/renovate-config:ignore-stalebot-action"]`
+
+## ignore-reviewdog-action
+Ignores Renovate PRs that are created by the updates to the [reviewdog](https://github.com/powerhome/software/blob/main/modules/github-repo/reviewdog.tpl) action.
+
+This ensures that reviewdog updates won't be created by Renovate, bringing repos out of compliance with the Software repo's state.
+
+Usage: `"extends": ["github>powerhome/renovate-config:ignore-reviewdog-action"]`
