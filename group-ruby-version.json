@@ -1,0 +1,11 @@
+{
+  "packageRules": [
+    {
+      "description": "Keep Ruby version in sync",
+      "matchManagers": ["dockerfile", "ruby-version", "asdf"],
+      "matchDepNames": ["ruby"],
+      "groupName": "ruby version",
+      "commitMessageTopic": "Ruby"
+    }
+  ]
+}
