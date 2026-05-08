@@ -9,12 +9,6 @@
       "matchPackageNames": ["ghcr.io/grafana/grafana-operator"],
       "allowedVersions": "<5.8.1",
       "description": "See https://github.com/powerhome/pac/pull/1983 and https://github.com/grafana/grafana-operator/pull/1500"
-    },
-    {
-      "matchDatasources": ["rubygems"],
-      "matchPackageNames": ["multi_json"],
-      "allowedVersions": "<1.21",
-      "description": "See https://runway.powerhrg.com/backlog_items/GOG-1764"
     }
   ]
 }
