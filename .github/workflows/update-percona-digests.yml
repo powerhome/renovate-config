@@ -15,7 +15,7 @@ on:
           - pxc
           - postgresql
       version:
-        description: 'Specific Percona version to check (e.g., 1.18.0 for PXC or 2.7.0 for PostgreSQL)'
+        description: 'Specific Percona version to check (e.g., 1.18.0 for PXC or 2.8.2 for PostgreSQL)'
         required: false
         type: string
 
