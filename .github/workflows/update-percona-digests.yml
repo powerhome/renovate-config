@@ -44,23 +44,25 @@ jobs:
         id: update-digests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPERATOR_INPUT: ${{ github.event.inputs.operator }}
+          VERSION_INPUT: ${{ github.event.inputs.version }}
         run: |
-          OPERATOR_ARG=""
-          VERSION_ARG=""
-          
+          set -euo pipefail
+
           # Set operator (default to 'all' for scheduled runs)
-          OPERATOR="${{ github.event.inputs.operator }}"
+          OPERATOR="$OPERATOR_INPUT"
           if [ -z "$OPERATOR" ]; then
             OPERATOR="all"
           fi
-          OPERATOR_ARG="--operator $OPERATOR"
-          
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            VERSION_ARG="--version ${{ github.event.inputs.version }}"
+
+          ARGS=(--operator "$OPERATOR")
+
+          if [ -n "$VERSION_INPUT" ]; then
+            ARGS+=(--version "$VERSION_INPUT")
           fi
 
           # Run our custom script
-          ./bin/update_percona_digests.rb $OPERATOR_ARG $VERSION_ARG
+          ./bin/update_percona_digests.rb "${ARGS[@]}"
 
           # Check if any config files were changed
           CHANGED_FILES=""
@@ -80,7 +82,10 @@ jobs:
             echo "files=$CHANGED_FILES" >> $GITHUB_OUTPUT
 
             # Get a representative version for the PR title
-            VERSION=$(git diff --name-only | head -1 | grep -oP '\d+\.\d+\.\d+' | head -1 || echo "latest")
+            VERSION=$(git diff -- percona-pxc-versions.json percona-postgresql-versions.json | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | sort -Vu | tail -1 || true)
+            if [ -z "$VERSION" ]; then
+              VERSION="latest"
+            fi
             echo "version=$VERSION" >> $GITHUB_OUTPUT
           fi
 
