@@ -179,69 +179,38 @@ class PerconaDigestUpdater
 
     image_configs.each do |image_name, config|
       package_rules << {
+        'matchDatasources' => ['docker'],
         'matchPackageNames' => [image_name],
         'allowedVersions' => config[:allowed_versions],
-        'replacementName' => image_name,
-        'replacementVersion' => config[:latest_version],
-        'replacementDigest' => config[:latest_digest]
+        'pinDigests' => true
       }
     end
 
     # Update the general Percona rule with all allowed versions
-    general_rule = package_rules.find { |rule|
-      rule['matchPackageNames'] && rule['matchPackageNames'].include?('/^percona//')
-    }
+    aggregate_allowed_versions = allowed_versions_pattern(image_configs.values.flat_map { |config| config[:versions] })
 
-            if general_rule
-      all_versions = image_configs.values.flat_map { |config|
-        pattern_content = config[:allowed_versions].gsub(/^\/\^\(|\)\$$/, '')
-        pattern_content.split('|').map { |v| v.gsub(/\\/, '') } # Remove escaping
-      }.uniq.sort
+    package_rules.each do |rule|
+      next unless percona_aggregate_rule?(rule, image_configs.keys)
 
-      escaped_versions = all_versions.map { |v| Regexp.escape(v) }
-      general_rule['allowedVersions'] = "/^(#{escaped_versions.join('|')})$/"
+      rule['matchDatasources'] = ['docker']
+      rule['matchPackageNames'] = image_configs.keys.sort
+      rule['allowedVersions'] = aggregate_allowed_versions
+      rule['pinDigests'] = true
     end
 
     renovate_config['packageRules'] = package_rules
 
     # Write updated config with pretty formatting
-    File.write(renovate_path, JSON.pretty_generate(renovate_config))
+    File.write(renovate_path, "#{JSON.pretty_generate(renovate_config)}\n")
   end
 
   def build_image_configs(images)
     configs = {}
 
     images.each do |image_name, versions|
-      # Create regex pattern for allowed versions (escape special chars)
-      version_list = versions.keys.map { |v| Regexp.escape(v) }
-      version_pattern = "/^(#{version_list.join('|')})$/"
-
-      # Determine latest version using version comparison
-      latest_version = versions.keys.sort_by { |v|
-        # Handle version formats like "8.0.42-33.1", "2.8.15", "3.3.1", "2.7.0-ppg17.5.2-postgres-gis3.3.8"
-        # Split on non-alphanumeric characters and convert numbers to integers for proper sorting
-        parts = v.split(/[-.]/).map do |part|
-          if part.match(/^\d+$/)
-            part.to_i
-          else
-            # For non-numeric parts, use original string but sort numerically if possible
-            part
-          end
-        end
-
-        # Pad with zeros to ensure consistent comparison length
-        while parts.length < 10
-          parts << 0
-        end
-
-        # Convert non-numeric strings to sortable format
-        parts.map { |p| p.is_a?(String) ? [1, p] : [0, p] }
-      }.last
-
       configs[image_name] = {
-        allowed_versions: version_pattern,
-        latest_version: latest_version,
-        latest_digest: "sha256:#{versions[latest_version]}"
+        allowed_versions: allowed_versions_pattern(versions.keys),
+        versions: versions.keys
       }
     end
 
@@ -256,6 +225,28 @@ class PerconaDigestUpdater
     return true if architecture.nil? || architecture.strip.empty?
 
     SUPPORTED_ARCHITECTURES.include?(architecture.downcase.strip)
+  end
+
+  def allowed_versions_pattern(versions)
+    version_list = versions.uniq.sort_by { |version| version_sort_key(version) }.map { |version| Regexp.escape(version) }
+    "/^(#{version_list.join('|')})$/"
+  end
+
+  def percona_aggregate_rule?(rule, exact_image_names)
+    package_names = rule['matchPackageNames']
+    return false unless package_names
+    return false if package_names.any? { |name| exact_image_names.include?(name) }
+
+    package_names.any? { |name| name.include?('percona') }
+  end
+
+  def version_sort_key(version)
+    parts = version.split(/[-.]/).map do |part|
+      part.match?(/\A\d+\z/) ? part.to_i : part
+    end
+
+    parts << 0 while parts.length < 10
+    parts.map { |part| part.is_a?(String) ? [1, part] : [0, part] }
   end
 end
 
