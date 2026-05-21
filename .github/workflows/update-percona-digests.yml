@@ -23,17 +23,21 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: update-percona-digests
+  cancel-in-progress: false
+
 jobs:
   update-percona-digests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@afeafc3d1ab54a631816aba4c914a0081c12ff2f # v1.310.0
         with:
-          ruby-version: '3.1'
+          ruby-version: '3.4'
           bundler-cache: false
 
       - name: Update Percona digests
@@ -82,7 +86,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.update-digests.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: update Percona certified digests"
