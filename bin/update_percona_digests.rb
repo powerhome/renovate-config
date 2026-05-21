@@ -4,8 +4,12 @@ require 'net/http'
 require 'uri'
 require 'json'
 require 'optparse'
+require 'cgi'
 
 class PerconaDigestUpdater
+  DIGEST_PATTERN = /\A[a-f0-9]{64}\z/i
+  SUPPORTED_ARCHITECTURES = ['amd64', 'x86_64', 'x86-64'].freeze
+
   OPERATORS = {
     'pxc' => {
       github_repo: 'percona/percona-xtradb-cluster-operator',
@@ -118,7 +122,7 @@ class PerconaDigestUpdater
     response.body
   end
 
-    def parse_certified_images(html_content)
+  def parse_certified_images(html_content)
     images = {}
 
     # Parse HTML table rows for certified images
@@ -128,23 +132,25 @@ class PerconaDigestUpdater
 
       next if cells.length < 2
 
-      image_cell = cells[0].strip.gsub(/<[^>]*>/, '') # Remove HTML tags
-      digest_cell = cells[1].strip.gsub(/<[^>]*>/, '') # Remove HTML tags
+      image_cell = text_from_html(cells[0])
+      digest_cell = text_from_html(cells[1])
 
       # Skip header rows and non-image rows
       next if image_cell.downcase.include?('image') ||
               digest_cell.downcase.include?('digest') ||
               !image_cell.start_with?('percona/') ||
-              !digest_cell.match?(/^[a-f0-9]{64}$/i)
+              !digest_cell.match?(DIGEST_PATTERN)
 
       # Parse image name and version
-      if image_cell.match(/^(percona\/[^:]+):(.+?)(?:\s+\([^)]+\))?$/)
-        image_name = $1.strip
-        version = $2.strip
+      match = image_cell.match(/\A(?<image_name>percona\/[^:]+):(?<version>.+?)(?:\s+\((?<architecture>[^)]+)\))?\z/)
+      next unless match
+      next unless supported_architecture?(match[:architecture])
 
-        images[image_name] ||= {}
-        images[image_name][version] = digest_cell
-      end
+      image_name = match[:image_name].strip
+      version = match[:version].strip
+
+      images[image_name] ||= {}
+      images[image_name][version] ||= digest_cell
     end
 
     images
@@ -240,6 +246,16 @@ class PerconaDigestUpdater
     end
 
     configs
+  end
+
+  def text_from_html(html)
+    CGI.unescapeHTML(html.gsub(/<[^>]*>/, '')).strip
+  end
+
+  def supported_architecture?(architecture)
+    return true if architecture.nil? || architecture.strip.empty?
+
+    SUPPORTED_ARCHITECTURES.include?(architecture.downcase.strip)
   end
 end
 
