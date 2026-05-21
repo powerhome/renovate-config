@@ -106,7 +106,7 @@ jobs:
 
             ### Sources
             - PXC Operator: https://docs.percona.com/percona-operator-for-mysql/pxc/ReleaseNotes/
-            - PostgreSQL Operator: https://docs.percona.com/percona-operator-for-postgresql/2.0/ReleaseNotes/
+            - PostgreSQL Operator: https://docs.percona.com/percona-operator-for-postgresql/latest/ReleaseNotes/
 
             ### Review Checklist
             - [ ] Verify the digests match the official Percona release notes
