@@ -271,6 +271,11 @@ if __FILE__ == $0
   end.parse!
 
   if options[:operator] == 'all'
+    if options[:version]
+      warn 'ERROR: --version can only be used with --operator pxc or --operator postgresql'
+      exit 1
+    end
+
     PerconaDigestUpdater::OPERATORS.keys.each do |operator|
       puts "\n" + "="*50
       updater = PerconaDigestUpdater.new(operator, options[:version])
