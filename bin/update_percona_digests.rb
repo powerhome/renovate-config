@@ -15,7 +15,7 @@ class PerconaDigestUpdater
     },
     'postgresql' => {
       github_repo: 'percona/percona-postgresql-operator',
-      docs_base_url: 'https://docs.percona.com/percona-operator-for-postgresql/2.0/ReleaseNotes',
+      docs_base_url: 'https://docs.percona.com/percona-operator-for-postgresql/latest/ReleaseNotes',
       docs_pattern: 'Kubernetes-Operator-for-PostgreSQL-RN%s.html',
       config_file: 'percona-postgresql-versions.json'
     }
