@@ -67,6 +67,13 @@ RUN mkdir $NVM_DIR \
     && npm config set tarball /tmp/node-headers.tgz
 ```
 
+## group-ruby-version
+Groups Ruby version updates from a Dockerfile base image and a `.tool-versions` file into a single PR, so both stay in sync.
+
+If a repo only has one of the two, that one is updated on its own — no extra effect on non-Ruby projects.
+
+Usage: `"extends": ["github>powerhome/renovate-config:group-ruby-version"]`
+
 ## add-labels
 Adds standard label(s) to Renovate PRs.
 
