@@ -8,47 +8,67 @@
         "percona-upgrades"
       ],
       "matchPackageNames": [
-        "/^percona\\/.*postgresql.*//",
-        "/^percona\\/.*pgbouncer.*//",
-        "/^percona\\/.*pgbackrest.*//"
+        "percona/percona-distribution-postgresql",
+        "percona/percona-pgbackrest",
+        "percona/percona-pgbouncer",
+        "percona/percona-postgresql-operator",
+        "percona/pmm-client"
       ],
-      "allowedVersions": "/^(PLACEHOLDER)$/"
+      "allowedVersions": "/^(1\\.25\\.0\\-1|2\\.8\\.2|2\\.8\\.2\\-ppg13\\.23\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg14\\.20\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg15\\.15\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg16\\.11\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg17\\.7\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg18\\.1\\-postgres\\-gis3\\.5\\.4|2\\.44\\.1\\-1|2\\.57\\.0\\-1|3\\.5\\.0|13\\.23\\-2|14\\.20\\-2|15\\.15\\-2|16\\.11\\-2|17\\.7\\-2|18\\.1\\-3)$/",
+      "matchDatasources": [
+        "docker"
+      ],
+      "pinDigests": true
     },
     {
+      "matchDatasources": [
+        "docker"
+      ],
       "matchPackageNames": [
         "percona/percona-postgresql-operator"
       ],
-      "allowedVersions": "/^(2\\.7\\.0|2\\.7\\.0\\-ppg17\\.5\\.2\\-postgres|2\\.7\\.0\\-ppg16\\.9\\-postgres|2\\.7\\.0\\-ppg15\\.13\\-postgres|2\\.7\\.0\\-ppg14\\.18\\-postgres|2\\.7\\.0\\-ppg13\\.21\\-postgres|2\\.7\\.0\\-ppg17\\.5\\.2\\-postgres\\-gis3\\.3\\.8|2\\.7\\.0\\-ppg16\\.9\\-postgres\\-gis3\\.3\\.8|2\\.7\\.0\\-ppg15\\.13\\-postgres\\-gis3\\.3\\.8|2\\.7\\.0\\-ppg14\\.18\\-postgres\\-gis3\\.3\\.8|2\\.7\\.0\\-ppg13\\.21\\-postgres\\-gis3\\.3\\.8)$/",
-      "replacementName": "percona/percona-postgresql-operator",
-      "replacementVersion": "2.7.0-ppg17.5.2-postgres-gis3.3.8",
-      "replacementDigest": "sha256:860ccc180c1ac6be3c34c354d6ba9148b00330e183ba5913954e34d49c95d22f"
+      "allowedVersions": "/^(2\\.8\\.2|2\\.8\\.2\\-ppg13\\.23\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg14\\.20\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg15\\.15\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg16\\.11\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg17\\.7\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg18\\.1\\-postgres\\-gis3\\.5\\.4)$/",
+      "pinDigests": true
     },
     {
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/percona-distribution-postgresql"
+      ],
+      "allowedVersions": "/^(13\\.23\\-2|14\\.20\\-2|15\\.15\\-2|16\\.11\\-2|17\\.7\\-2|18\\.1\\-3)$/",
+      "pinDigests": true
+    },
+    {
+      "matchDatasources": [
+        "docker"
+      ],
       "matchPackageNames": [
         "percona/percona-pgbouncer"
       ],
-      "allowedVersions": "/^(1\\.24\\.1)$/",
-      "replacementName": "percona/percona-pgbouncer",
-      "replacementVersion": "1.24.1",
-      "replacementDigest": "sha256:479aa893e55c5afe8b97852c90d7551dc55d3fc526773a5a7d992876bbf54cb0"
+      "allowedVersions": "/^(1\\.25\\.0\\-1)$/",
+      "pinDigests": true
     },
     {
+      "matchDatasources": [
+        "docker"
+      ],
       "matchPackageNames": [
         "percona/percona-pgbackrest"
       ],
-      "allowedVersions": "/^(2\\.55\\.0)$/",
-      "replacementName": "percona/percona-pgbackrest",
-      "replacementVersion": "2.55.0",
-      "replacementDigest": "sha256:bc15d058e7820499bf67ccec2fe51c583fe67a6e3ed55ec28adf3e252828924a"
+      "allowedVersions": "/^(2\\.57\\.0\\-1)$/",
+      "pinDigests": true
     },
     {
+      "matchDatasources": [
+        "docker"
+      ],
       "matchPackageNames": [
         "percona/pmm-client"
       ],
-      "allowedVersions": "/^(2\\.44\\.1|3\\.3\\.0)$/",
-      "replacementName": "percona/pmm-client",
-      "replacementVersion": "3.3.0",
-      "replacementDigest": "sha256:c03aa678d26faf783c3598b3a139a8f3154e5bf1bc9f5a3c9abf0533922f79d6"
+      "allowedVersions": "/^(2\\.44\\.1\\-1|3\\.5\\.0)$/",
+      "pinDigests": true
     }
   ]
 }
