@@ -14,10 +14,6 @@ on:
           - all
           - pxc
           - postgresql
-      version:
-        description: 'Specific Percona version to check (e.g., 1.18.0 for PXC or 2.8.2 for PostgreSQL)'
-        required: false
-        type: string
 
 permissions:
   contents: write
@@ -49,7 +45,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPERATOR_INPUT: ${{ github.event.inputs.operator }}
-          VERSION_INPUT: ${{ github.event.inputs.version }}
         run: |
           set -euo pipefail
 
@@ -59,24 +54,19 @@ jobs:
             OPERATOR="all"
           fi
 
-          ARGS=(--operator "$OPERATOR")
-
-          if [ -n "$VERSION_INPUT" ]; then
-            ARGS+=(--version "$VERSION_INPUT")
-          fi
-
           # Run our custom script
-          if [ "$OPERATOR" = "all" ]; then
-            if [ -n "$VERSION_INPUT" ]; then
-              echo "version can only be used with operator pxc or postgresql"
-              exit 1
-            fi
-
-            ./bin/update_percona_digests.rb --operator pxc --version "$PXC_VERSION"
-            ./bin/update_percona_digests.rb --operator postgresql --version "$POSTGRESQL_VERSION"
-          else
-            ./bin/update_percona_digests.rb "${ARGS[@]}"
-          fi
+          case "$OPERATOR" in
+            all)
+              ./bin/update_percona_digests.rb --operator pxc --version "$PXC_VERSION"
+              ./bin/update_percona_digests.rb --operator postgresql --version "$POSTGRESQL_VERSION"
+              ;;
+            pxc)
+              ./bin/update_percona_digests.rb --operator pxc --version "$PXC_VERSION"
+              ;;
+            postgresql)
+              ./bin/update_percona_digests.rb --operator postgresql --version "$POSTGRESQL_VERSION"
+              ;;
+          esac
 
           # Check if any config files were changed
           CHANGED_FILES=""
