@@ -171,10 +171,7 @@ class PerconaDigestUpdater
     package_rules = renovate_config['packageRules'] || []
 
     package_rules.reject! do |rule|
-      rule['matchPackageNames'] &&
-      rule['matchPackageNames'].any? { |name|
-        name.start_with?('percona/') && !name.include?('/^percona//')
-      }
+      generated_image_rule?(rule)
     end
 
     image_configs.each do |image_name, config|
@@ -190,7 +187,7 @@ class PerconaDigestUpdater
     aggregate_allowed_versions = allowed_versions_pattern(image_configs.values.flat_map { |config| config[:versions] })
 
     package_rules.each do |rule|
-      next unless percona_aggregate_rule?(rule, image_configs.keys)
+      next unless percona_aggregate_rule?(rule)
 
       rule['matchDatasources'] = ['docker']
       rule['matchPackageNames'] = image_configs.keys.sort
@@ -232,12 +229,20 @@ class PerconaDigestUpdater
     "/^(#{version_list.join('|')})$/"
   end
 
-  def percona_aggregate_rule?(rule, exact_image_names)
+  def percona_aggregate_rule?(rule)
     package_names = rule['matchPackageNames']
     return false unless package_names
-    return false if package_names.any? { |name| exact_image_names.include?(name) }
+    return false unless rule.key?('groupName')
 
     package_names.any? { |name| name.include?('percona') }
+  end
+
+  def generated_image_rule?(rule)
+    package_names = rule['matchPackageNames']
+    package_names &&
+      package_names.one? &&
+      package_names.first.start_with?('percona/') &&
+      !rule.key?('groupName')
   end
 
   def version_sort_key(version)
