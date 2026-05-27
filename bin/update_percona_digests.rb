@@ -7,6 +7,12 @@ require 'optparse'
 require 'cgi'
 
 class PerconaDigestUpdater
+  class Error < StandardError; end
+  class ConfigUpdateError < Error; end
+  class InvalidOptionsError < Error; end
+  class ReleaseFetchError < Error; end
+  class ReleaseParseError < Error; end
+
   DIGEST_PATTERN = /\A[a-f0-9]{64}\z/i
 
   OperatorConfig = Struct.new(:name, :github_repo, :docs_base_url, :docs_pattern, :config_file, keyword_init: true) do
@@ -81,11 +87,6 @@ class PerconaDigestUpdater
     release_content = fetch_release_notes
     certified_images = parse_certified_images(release_content)
 
-    if certified_images.empty?
-      puts "ERROR: No certified images found in release notes"
-      exit 1
-    end
-
     grouped_images = group_certified_images(certified_images)
 
     puts "Found #{grouped_images.length} certified images:"
@@ -120,24 +121,22 @@ class PerconaDigestUpdater
     response = http.request(request)
 
     if response.code != '200'
-      puts "ERROR: Failed to fetch GitHub releases (HTTP #{response.code})"
-      puts "Response: #{response.body}"
-      exit 1
+      raise ReleaseFetchError,
+            "Failed to fetch GitHub releases for #{@config.name} from #{github_api_url} " \
+            "(HTTP #{response.code}): #{response.body}"
     end
 
     releases = JSON.parse(response.body)
     
     if releases.empty?
-      puts "ERROR: No releases found on GitHub"
-      exit 1
+      raise ReleaseFetchError, "No releases found for #{@config.name} at #{github_api_url}"
     end
 
     # Filter out prerelease/beta versions and find the latest stable release
     stable_releases = releases.reject { |release| release['prerelease'] || release['draft'] }
     
     if stable_releases.empty?
-      puts "ERROR: No stable releases found on GitHub"
-      exit 1
+      raise ReleaseFetchError, "No stable releases found for #{@config.name} at #{github_api_url}"
     end
 
     # Extract version from tag_name (e.g., "v1.18.0" -> "1.18.0")
@@ -149,6 +148,9 @@ class PerconaDigestUpdater
     puts "Release date: #{latest_release['published_at']}"
     
     version
+  rescue JSON::ParserError => e
+    raise ReleaseFetchError,
+          "Failed to parse GitHub releases response for #{@config.name} from #{github_api_url}: #{e.message}"
   end
 
   def fetch_release_notes
@@ -158,8 +160,9 @@ class PerconaDigestUpdater
     response = Net::HTTP.get_response(uri)
 
     if response.code != '200'
-      puts "ERROR: Failed to fetch release notes (HTTP #{response.code})"
-      exit 1
+      raise ReleaseFetchError,
+            "Failed to fetch release notes for #{@config.name} #{@version} from #{@release_notes_url} " \
+            "(HTTP #{response.code})"
     end
 
     response.body
@@ -204,15 +207,18 @@ class PerconaDigestUpdater
       seen_images[image_key] = true
     end
 
-    certified_images
+    return certified_images unless certified_images.empty?
+
+    raise ReleaseParseError,
+          "No certified images found for #{@config.name} #{@version} at #{@release_notes_url}. " \
+          "Expected release notes table rows with a percona/image:version value and a 64-character digest."
   end
 
   def update_renovate_config(certified_images)
     renovate_path = @config.config_file
 
     unless File.exist?(renovate_path)
-      puts "ERROR: #{renovate_path} not found"
-      exit 1
+      raise ConfigUpdateError, "#{renovate_path} not found"
     end
 
     renovate_config = JSON.parse(File.read(renovate_path))
@@ -245,6 +251,8 @@ class PerconaDigestUpdater
 
     # Write updated config with pretty formatting
     File.write(renovate_path, "#{JSON.pretty_generate(renovate_config)}\n")
+  rescue JSON::ParserError => e
+    raise ConfigUpdateError, "Failed to parse #{renovate_path}: #{e.message}"
   end
 
   def build_image_version_sets(certified_images)
@@ -295,38 +303,43 @@ class PerconaDigestUpdater
 end
 
 if __FILE__ == $0
-  options = { operator: 'pxc' }
-  OptionParser.new do |opts|
-    opts.banner = "Usage: #{$0} [options]"
+  begin
+    options = { operator: 'pxc' }
+    OptionParser.new do |opts|
+      opts.banner = "Usage: #{$0} [options]"
 
-    opts.on("-o", "--operator OPERATOR", "Operator to process (pxc, postgresql, or all)", 
-            "Available: #{PerconaDigestUpdater::OPERATORS.keys.join(', ')}") do |o|
-      options[:operator] = o
-    end
+      opts.on("-o", "--operator OPERATOR", "Operator to process (pxc, postgresql, or all)",
+              "Available: #{PerconaDigestUpdater::OPERATORS.keys.join(', ')}") do |o|
+        options[:operator] = o
+      end
 
-    opts.on("-v", "--version VERSION", "Specific Percona version to process") do |v|
-      options[:version] = v
-    end
+      opts.on("-v", "--version VERSION", "Specific Percona version to process") do |v|
+        options[:version] = v
+      end
 
-    opts.on("-h", "--help", "Show this help") do
-      puts opts
-      exit
-    end
-  end.parse!
+      opts.on("-h", "--help", "Show this help") do
+        puts opts
+        exit
+      end
+    end.parse!
 
-  if options[:operator] == 'all'
-    if options[:version]
-      warn 'ERROR: --version can only be used with --operator pxc or --operator postgresql'
-      exit 1
-    end
+    if options[:operator] == 'all'
+      if options[:version]
+        raise PerconaDigestUpdater::InvalidOptionsError,
+              '--version can only be used with --operator pxc or --operator postgresql'
+      end
 
-    PerconaDigestUpdater::OPERATORS.keys.each do |operator|
-      puts "\n" + "="*50
-      updater = PerconaDigestUpdater.new(operator, options[:version])
+      PerconaDigestUpdater::OPERATORS.keys.each do |operator|
+        puts "\n" + "="*50
+        updater = PerconaDigestUpdater.new(operator, options[:version])
+        updater.run
+      end
+    else
+      updater = PerconaDigestUpdater.new(options[:operator], options[:version])
       updater.run
     end
-  else
-    updater = PerconaDigestUpdater.new(options[:operator], options[:version])
-    updater.run
+  rescue PerconaDigestUpdater::Error => e
+    warn "ERROR: #{e.message}"
+    exit 1
   end
 end
