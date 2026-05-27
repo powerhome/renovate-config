@@ -35,6 +35,98 @@ class PerconaDigestUpdater
     end
   end
 
+  CertifiedImageCatalog = Struct.new(:certified_images, keyword_init: true) do
+    def self.from_release_notes(html_content, operator:, version:, url:)
+      certified_images = []
+      seen_images = {}
+
+      html_content.scan(/<tr[^>]*>.*?<\/tr>/m) do |row|
+        cells = row.scan(/<td[^>]*>(.*?)<\/td>/m).flatten
+
+        next if cells.length < 2
+
+        image_cell = text_from_html(cells[0])
+        digest_cell = text_from_html(cells[1])
+
+        next if image_cell.downcase.include?('image') ||
+                digest_cell.downcase.include?('digest') ||
+                !image_cell.start_with?('percona/') ||
+                !digest_cell.match?(PerconaDigestUpdater::DIGEST_PATTERN)
+
+        match = image_cell.match(/\A(?<image_name>percona\/[^:]+):(?<version>.+?)(?:\s+\((?<architecture>[^)]+)\))?\z/)
+        next unless match
+
+        certified_image = CertifiedImage.new(
+          package_name: match[:image_name].strip,
+          version: match[:version].strip,
+          digest: digest_cell,
+          architecture: match[:architecture]
+        )
+        next unless certified_image.supported_architecture?
+
+        image_key = [certified_image.package_name, certified_image.version]
+        next if seen_images[image_key]
+
+        certified_images << certified_image
+        seen_images[image_key] = true
+      end
+
+      unless certified_images.empty?
+        return new(certified_images: certified_images)
+      end
+
+      raise ReleaseParseError,
+            "No certified images found for #{operator} #{version} at #{url}. " \
+            "Expected release notes table rows with a percona/image:version value and a 64-character digest."
+    end
+
+    def package_count
+      grouped_images.length
+    end
+
+    def summary_lines
+      grouped_images.map do |package_name, versions|
+        "#{package_name}: #{versions.keys.join(', ')}"
+      end
+    end
+
+    def image_version_sets
+      grouped_images.map do |package_name, versions|
+        ImageVersionSet.new(package_name: package_name, versions: versions.keys)
+      end
+    end
+
+    def package_names
+      image_version_sets.map(&:package_name).sort
+    end
+
+    def allowed_versions_pattern
+      ImageVersionSet.new(
+        package_name: 'aggregate',
+        versions: image_version_sets.flat_map(&:versions)
+      ).allowed_versions_pattern
+    end
+
+    def to_a
+      certified_images.dup
+    end
+
+    private
+
+    def grouped_images
+      @grouped_images ||= certified_images.each_with_object({}) do |certified_image, images|
+        images[certified_image.package_name] ||= {}
+        images[certified_image.package_name][certified_image.version] = certified_image.digest
+      end
+    end
+
+    def self.text_from_html(html)
+      CGI.unescapeHTML(html.gsub(/<[^>]*>/, '')).strip
+    end
+
+    private_class_method :text_from_html
+  end
+
   ImageVersionSet = Struct.new(:package_name, :versions, keyword_init: true) do
     def allowed_versions_pattern
       version_list = versions.uniq.sort_by { |version| PerconaDigestUpdater.version_sort_key(version) }
@@ -85,17 +177,15 @@ class PerconaDigestUpdater
     puts "Processing Percona #{@config.display_name} Operator v#{@version}"
 
     release_content = fetch_release_notes
-    certified_images = parse_certified_images(release_content)
+    certified_image_catalog = parse_certified_image_catalog(release_content)
 
-    grouped_images = group_certified_images(certified_images)
+    puts "Found #{certified_image_catalog.package_count} certified images:"
+    certified_image_catalog.summary_lines.each { |line| puts "  #{line}" }
 
-    puts "Found #{grouped_images.length} certified images:"
-    grouped_images.each { |name, versions| puts "  #{name}: #{versions.keys.join(', ')}" }
-
-    update_renovate_config(certified_images)
+    update_renovate_config(certified_image_catalog)
     puts "Successfully updated #{@config.config_file}"
 
-    certified_images
+    certified_image_catalog.to_a
   end
 
   private
@@ -168,53 +258,16 @@ class PerconaDigestUpdater
     response.body
   end
 
-  def parse_certified_images(html_content)
-    certified_images = []
-    seen_images = {}
-
-    # Parse HTML table rows for certified images
-    # Look for pattern: <td>percona/image:version</td><td>digest</td>
-    html_content.scan(/<tr[^>]*>.*?<\/tr>/m) do |row|
-      cells = row.scan(/<td[^>]*>(.*?)<\/td>/m).flatten
-
-      next if cells.length < 2
-
-      image_cell = text_from_html(cells[0])
-      digest_cell = text_from_html(cells[1])
-
-      # Skip header rows and non-image rows
-      next if image_cell.downcase.include?('image') ||
-              digest_cell.downcase.include?('digest') ||
-              !image_cell.start_with?('percona/') ||
-              !digest_cell.match?(DIGEST_PATTERN)
-
-      # Parse image name and version
-      match = image_cell.match(/\A(?<image_name>percona\/[^:]+):(?<version>.+?)(?:\s+\((?<architecture>[^)]+)\))?\z/)
-      next unless match
-
-      certified_image = CertifiedImage.new(
-        package_name: match[:image_name].strip,
-        version: match[:version].strip,
-        digest: digest_cell,
-        architecture: match[:architecture]
-      )
-      next unless certified_image.supported_architecture?
-
-      image_key = [certified_image.package_name, certified_image.version]
-      next if seen_images[image_key]
-
-      certified_images << certified_image
-      seen_images[image_key] = true
-    end
-
-    return certified_images unless certified_images.empty?
-
-    raise ReleaseParseError,
-          "No certified images found for #{@config.name} #{@version} at #{@release_notes_url}. " \
-          "Expected release notes table rows with a percona/image:version value and a 64-character digest."
+  def parse_certified_image_catalog(html_content)
+    CertifiedImageCatalog.from_release_notes(
+      html_content,
+      operator: @config.name,
+      version: @version,
+      url: @release_notes_url
+    )
   end
 
-  def update_renovate_config(certified_images)
+  def update_renovate_config(certified_image_catalog)
     renovate_path = @config.config_file
 
     unless File.exist?(renovate_path)
@@ -223,27 +276,23 @@ class PerconaDigestUpdater
 
     renovate_config = JSON.parse(File.read(renovate_path))
 
-    image_version_sets = build_image_version_sets(certified_images)
-
     package_rules = renovate_config['packageRules'] || []
 
     package_rules.reject! do |rule|
       generated_image_rule?(rule)
     end
 
-    image_version_sets.each do |image_version_set|
+    certified_image_catalog.image_version_sets.each do |image_version_set|
       package_rules << RenovatePackageRule.new(image_version_set: image_version_set).to_h
     end
 
     # Update the general Percona rule with all allowed versions
-    aggregate_allowed_versions = allowed_versions_pattern(image_version_sets.flat_map(&:versions))
-
     package_rules.each do |rule|
       next unless percona_aggregate_rule?(rule)
 
       rule['matchDatasources'] = ['docker']
-      rule['matchPackageNames'] = image_version_sets.map(&:package_name).sort
-      rule['allowedVersions'] = aggregate_allowed_versions
+      rule['matchPackageNames'] = certified_image_catalog.package_names
+      rule['allowedVersions'] = certified_image_catalog.allowed_versions_pattern
       rule['pinDigests'] = true
     end
 
@@ -253,27 +302,6 @@ class PerconaDigestUpdater
     File.write(renovate_path, "#{JSON.pretty_generate(renovate_config)}\n")
   rescue JSON::ParserError => e
     raise ConfigUpdateError, "Failed to parse #{renovate_path}: #{e.message}"
-  end
-
-  def build_image_version_sets(certified_images)
-    group_certified_images(certified_images).map do |image_name, versions|
-      ImageVersionSet.new(package_name: image_name, versions: versions.keys)
-    end
-  end
-
-  def group_certified_images(certified_images)
-    certified_images.each_with_object({}) do |certified_image, images|
-      images[certified_image.package_name] ||= {}
-      images[certified_image.package_name][certified_image.version] = certified_image.digest
-    end
-  end
-
-  def text_from_html(html)
-    CGI.unescapeHTML(html.gsub(/<[^>]*>/, '')).strip
-  end
-
-  def allowed_versions_pattern(versions)
-    ImageVersionSet.new(package_name: 'aggregate', versions: versions).allowed_versions_pattern
   end
 
   def percona_aggregate_rule?(rule)
