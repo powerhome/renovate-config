@@ -67,7 +67,19 @@
       "matchPackageNames": [
         "percona/pmm-client"
       ],
-      "allowedVersions": "/^(2\\.44\\.1\\-1|3\\.5\\.0)$/",
+      "matchCurrentVersion": "/^2\\./",
+      "allowedVersions": "/^(2\\.44\\.1\\-1)$/",
+      "pinDigests": true
+    },
+    {
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/pmm-client"
+      ],
+      "matchCurrentVersion": "/^3\\./",
+      "allowedVersions": "/^(3\\.5\\.0)$/",
       "pinDigests": true
     }
   ]

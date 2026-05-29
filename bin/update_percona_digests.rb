@@ -134,16 +134,51 @@ class PerconaDigestUpdater
 
       "/^(#{version_list.join('|')})$/"
     end
+
+    def major_version_sets
+      versions_by_major.sort_by { |major, _major_versions| PerconaDigestUpdater.version_sort_key(major) }
+        .map do |major, major_versions|
+          [
+            major,
+            ImageVersionSet.new(package_name: package_name, versions: major_versions)
+          ]
+        end
+    end
+
+    private
+
+    def versions_by_major
+      versions.each_with_object({}) do |version, major_versions|
+        major = version[/\A\d+/]
+        next unless major
+
+        major_versions[major] ||= []
+        major_versions[major] << version
+      end
+    end
   end
 
   RenovatePackageRule = Struct.new(:image_version_set, keyword_init: true) do
-    def to_h
-      {
+    def self.for_current_major(major, image_version_set)
+      new(image_version_set: image_version_set).to_h(
+        match_current_version: "/^#{Regexp.escape(major)}\\./"
+      )
+    end
+
+    def to_h(match_current_version: nil)
+      rule = {
         'matchDatasources' => ['docker'],
         'matchPackageNames' => [image_version_set.package_name],
+      }
+
+      if match_current_version
+        rule['matchCurrentVersion'] = match_current_version
+      end
+
+      rule.merge(
         'allowedVersions' => image_version_set.allowed_versions_pattern,
         'pinDigests' => true
-      }
+      )
     end
   end
 
@@ -283,7 +318,7 @@ class PerconaDigestUpdater
     end
 
     certified_image_catalog.image_version_sets.each do |image_version_set|
-      package_rules << RenovatePackageRule.new(image_version_set: image_version_set).to_h
+      package_rules.concat(package_rules_for(image_version_set))
     end
 
     # Update the general Percona rule with all allowed versions
@@ -302,6 +337,21 @@ class PerconaDigestUpdater
     File.write(renovate_path, "#{JSON.pretty_generate(renovate_config)}\n")
   rescue JSON::ParserError => e
     raise ConfigUpdateError, "Failed to parse #{renovate_path}: #{e.message}"
+  end
+
+  def package_rules_for(image_version_set)
+    if postgresql_pmm_client?(image_version_set)
+      return image_version_set.major_version_sets.map do |major, major_image_version_set|
+        RenovatePackageRule.for_current_major(major, major_image_version_set)
+      end
+    end
+
+    [RenovatePackageRule.new(image_version_set: image_version_set).to_h]
+  end
+
+  def postgresql_pmm_client?(image_version_set)
+    @config.name == 'postgresql' &&
+      image_version_set.package_name == 'percona/pmm-client'
   end
 
   def percona_aggregate_rule?(rule)
