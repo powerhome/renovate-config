@@ -193,19 +193,21 @@ class PerconaDigestUpdater
   end
 
   RenovatePackageRule = Struct.new(:image_version_set, keyword_init: true) do
-    def self.for_current_major(major, image_version_set)
+    def self.for_current_major(major, image_version_set, versioning: nil)
       new(image_version_set: image_version_set).to_h(
-        match_current_version: "/^#{Regexp.escape(major)}\\./"
+        match_current_version: "/^#{Regexp.escape(major)}\\./",
+        versioning: versioning
       )
     end
 
-    def self.for_current_postgres_major(postgres_major, image_version_set)
+    def self.for_current_postgres_major(postgres_major, image_version_set, versioning: nil)
       new(image_version_set: image_version_set).to_h(
-        match_current_version: postgres_major_matcher(postgres_major)
+        match_current_version: postgres_major_matcher(postgres_major, image_version_set.package_name),
+        versioning: versioning
       )
     end
 
-    def to_h(match_current_version: nil)
+    def to_h(match_current_version: nil, versioning: nil)
       rule = {
         'matchDatasources' => ['docker'],
         'matchPackageNames' => [image_version_set.package_name],
@@ -215,14 +217,25 @@ class PerconaDigestUpdater
         rule['matchCurrentVersion'] = match_current_version
       end
 
+      if versioning
+        rule['versioning'] = versioning
+      end
+
       rule.merge(
         'allowedVersions' => image_version_set.allowed_versions_pattern,
         'pinDigests' => true
       )
     end
 
-    def self.postgres_major_matcher(postgres_major)
-      "/(^|-)ppg#{Regexp.escape(postgres_major)}(?:\\D|$)|^#{Regexp.escape(postgres_major)}\\./"
+    def self.postgres_major_matcher(postgres_major, package_name)
+      escaped_major = Regexp.escape(postgres_major)
+
+      case package_name
+      when 'percona/percona-postgresql-operator'
+        "/\\bppg#{escaped_major}(?:[.-]\\d+)?-postgres(?:-|$)/"
+      when 'percona/percona-distribution-postgresql'
+        "/^#{escaped_major}\\./"
+      end
     end
 
     private_class_method :postgres_major_matcher
@@ -392,7 +405,11 @@ class PerconaDigestUpdater
 
     if postgresql_pmm_client?(image_version_set)
       return image_version_set.major_version_sets.map do |major, major_image_version_set|
-        RenovatePackageRule.for_current_major(major, major_image_version_set)
+        RenovatePackageRule.for_current_major(
+          major,
+          major_image_version_set,
+          versioning: 'semver'
+        )
       end
     end
 
@@ -406,17 +423,24 @@ class PerconaDigestUpdater
     unless image_version_set_without_postgres_major.versions.empty?
       package_rules << RenovatePackageRule.new(
         image_version_set: image_version_set_without_postgres_major
-      ).to_h
+      ).to_h(versioning: versioning_for(image_version_set))
     end
 
     package_rules.concat(
       image_version_set.postgres_major_version_sets.map do |postgres_major, postgres_major_image_version_set|
         RenovatePackageRule.for_current_postgres_major(
           postgres_major,
-          postgres_major_image_version_set
+          postgres_major_image_version_set,
+          versioning: versioning_for(image_version_set)
         )
       end
     )
+  end
+
+  def versioning_for(image_version_set)
+    return 'semver' if image_version_set.package_name == 'percona/percona-postgresql-operator'
+
+    nil
   end
 
   def postgresql_postgres_versioned_image?(image_version_set)
