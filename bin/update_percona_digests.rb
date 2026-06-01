@@ -160,6 +160,15 @@ class PerconaDigestUpdater
       ImageVersionSet.new(package_name: package_name, versions: versions_without_postgres_major)
     end
 
+    def mysql_line_version_sets
+      versions_by_mysql_line.map do |mysql_line, mysql_line_versions|
+        [
+          mysql_line,
+          ImageVersionSet.new(package_name: package_name, versions: mysql_line_versions)
+        ]
+      end
+    end
+
     private
 
     def versions_by_major
@@ -190,6 +199,20 @@ class PerconaDigestUpdater
         version[/\A(\d+)\./, 1]
       end
     end
+
+    def versions_by_mysql_line
+      versions.each_with_object({}) do |version, mysql_line_versions|
+        line = mysql_line(version)
+        next unless line
+
+        mysql_line_versions[line] ||= []
+        mysql_line_versions[line] << version
+      end.sort_by { |line, _line_versions| PerconaDigestUpdater.version_sort_key(line) }
+    end
+
+    def mysql_line(version)
+      version[/\A(\d+\.\d+)\./, 1]
+    end
   end
 
   RenovatePackageRule = Struct.new(:image_version_set, keyword_init: true) do
@@ -204,6 +227,13 @@ class PerconaDigestUpdater
       new(image_version_set: image_version_set).to_h(
         match_current_version: postgres_major_matcher(postgres_major, image_version_set.package_name),
         versioning: versioning
+      )
+    end
+
+    def self.for_current_mysql_line(mysql_line, image_version_set)
+      new(image_version_set: image_version_set).to_h(
+        match_current_version: "/^#{Regexp.escape(mysql_line)}\\./",
+        versioning: 'semver'
       )
     end
 
@@ -399,6 +429,10 @@ class PerconaDigestUpdater
   end
 
   def package_rules_for(image_version_set)
+    if pxc_mysql_versioned_image?(image_version_set)
+      return mysql_line_package_rules_for(image_version_set)
+    end
+
     if postgresql_postgres_versioned_image?(image_version_set)
       return postgres_major_package_rules_for(image_version_set)
     end
@@ -414,6 +448,12 @@ class PerconaDigestUpdater
     end
 
     [RenovatePackageRule.new(image_version_set: image_version_set).to_h]
+  end
+
+  def mysql_line_package_rules_for(image_version_set)
+    image_version_set.mysql_line_version_sets.map do |mysql_line, mysql_line_image_version_set|
+      RenovatePackageRule.for_current_mysql_line(mysql_line, mysql_line_image_version_set)
+    end
   end
 
   def postgres_major_package_rules_for(image_version_set)
@@ -441,6 +481,14 @@ class PerconaDigestUpdater
     return 'semver' if image_version_set.package_name == 'percona/percona-postgresql-operator'
 
     nil
+  end
+
+  def pxc_mysql_versioned_image?(image_version_set)
+    @config.name == 'pxc' &&
+      [
+        'percona/percona-xtradb-cluster',
+        'percona/percona-xtrabackup'
+      ].include?(image_version_set.package_name)
   end
 
   def postgresql_postgres_versioned_image?(image_version_set)
