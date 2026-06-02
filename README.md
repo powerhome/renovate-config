@@ -67,6 +67,31 @@ RUN mkdir $NVM_DIR \
     && npm config set tarball /tmp/node-headers.tgz
 ```
 
+## os-package-versions
+Allows Renovate to update specifically labeled Ubuntu and Debian package versions in Dockerfiles.
+
+Usage: `"extends": ["github>powerhome/renovate-config:os-package-versions"]`
+
+Supported datasource aliases:
+
+- `ubuntu-2404`
+- `ubuntu-2604`
+- `debian-12`
+- `debian-13`
+- `debian-14`
+
+Dockerfile syntax example:
+
+```Dockerfile
+FROM ubuntu:24.04
+
+# renovate: datasource=ubuntu-2404 depName=curl
+ARG CURL_VERSION=8.5.0-2ubuntu10.6
+RUN apt-get update && \
+    apt-get install -y curl="${CURL_VERSION}" && \
+    apt-get clean
+```
+
 ## group-ruby-version
 Groups Ruby version updates from a Dockerfile base image and a `.tool-versions` file into a single PR, so both stay in sync.
 

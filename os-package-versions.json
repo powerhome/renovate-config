@@ -1,0 +1,102 @@
+{
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile(\\.[^/]*)?$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate\\s*:\\s*datasource=(?<depType>ubuntu-2404|ubuntu-2604|debian-12|debian-13|debian-14|debian-15)\\s+depName=(?<depName>\\S+)(?:[^\\r\\n]*)[\\r\\n]+\\s*(?:ENV|ARG)\\s+[A-Za-z_][A-Za-z0-9_]*(?:=|\\s+)['\"]?(?<currentValue>[^'\"\\s]+)['\"]?"
+      ],
+      "datasourceTemplate": "deb",
+      "versioningTemplate": "deb"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "deb"
+      ],
+      "matchDepTypes": [
+        "ubuntu-2404"
+      ],
+      "groupName": "ubuntu 24.04 packages",
+      "registryUrls": [
+        "https://archive.ubuntu.com/ubuntu/?suite=noble&components=main,universe&binaryArch=amd64",
+        "https://archive.ubuntu.com/ubuntu/?suite=noble-updates&components=main,universe&binaryArch=amd64",
+        "https://archive.ubuntu.com/ubuntu/?suite=noble-security&components=main,universe&binaryArch=amd64"
+      ]
+    },
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "deb"
+      ],
+      "matchDepTypes": [
+        "ubuntu-2604"
+      ],
+      "groupName": "ubuntu 26.04 packages",
+      "registryUrls": [
+        "https://archive.ubuntu.com/ubuntu/?suite=resolute&components=main,universe&binaryArch=amd64",
+        "https://archive.ubuntu.com/ubuntu/?suite=resolute-updates&components=main,universe&binaryArch=amd64",
+        "https://archive.ubuntu.com/ubuntu/?suite=resolute-security&components=main,universe&binaryArch=amd64"
+      ]
+    },
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "deb"
+      ],
+      "matchDepTypes": [
+        "debian-12"
+      ],
+      "groupName": "debian 12 packages",
+      "registryUrls": [
+        "https://deb.debian.org/debian/?suite=bookworm&components=main,contrib,non-free,non-free-firmware&binaryArch=amd64",
+        "https://deb.debian.org/debian/?suite=bookworm-updates&components=main,contrib,non-free,non-free-firmware&binaryArch=amd64",
+        "https://security.debian.org/debian-security/?suite=bookworm-security&components=main,contrib,non-free,non-free-firmware&binaryArch=amd64"
+      ]
+    },
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "deb"
+      ],
+      "matchDepTypes": [
+        "debian-13"
+      ],
+      "groupName": "debian 13 packages",
+      "registryUrls": [
+        "https://deb.debian.org/debian/?suite=trixie&components=main,contrib,non-free,non-free-firmware&binaryArch=amd64",
+        "https://deb.debian.org/debian/?suite=trixie-updates&components=main,contrib,non-free,non-free-firmware&binaryArch=amd64",
+        "https://security.debian.org/debian-security/?suite=trixie-security&components=main,contrib,non-free,non-free-firmware&binaryArch=amd64"
+      ]
+    },
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "deb"
+      ],
+      "matchDepTypes": [
+        "debian-14"
+      ],
+      "groupName": "debian 14 packages",
+      "registryUrls": [
+        "https://deb.debian.org/debian/?suite=forky&components=main,contrib,non-free,non-free-firmware&binaryArch=amd64",
+        "https://deb.debian.org/debian/?suite=forky-updates&components=main,contrib,non-free,non-free-firmware&binaryArch=amd64",
+        "https://security.debian.org/debian-security/?suite=forky-security&components=main,contrib,non-free,non-free-firmware&binaryArch=amd64"
+      ]
+    }
+  ]
+}
