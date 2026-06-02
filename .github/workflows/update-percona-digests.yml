@@ -1,0 +1,134 @@
+name: Update Percona Certified Digests
+
+on:
+  schedule:
+    - cron: '0 10 * * 1'
+  workflow_dispatch:
+    inputs:
+      operator:
+        description: 'Operator to update (pxc, postgresql, or all)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - pxc
+          - postgresql
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  PXC_VERSION: '1.18.0'
+  POSTGRESQL_VERSION: '2.8.2'
+
+concurrency:
+  group: update-percona-digests
+  cancel-in-progress: false
+
+jobs:
+  update-percona-digests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@afeafc3d1ab54a631816aba4c914a0081c12ff2f # v1.310.0
+        with:
+          ruby-version: '3.4'
+          bundler-cache: false
+
+      - name: Update Percona digests
+        id: update-digests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPERATOR_INPUT: ${{ github.event.inputs.operator }}
+        run: |
+          set -euo pipefail
+
+          # Set operator (default to 'all' for scheduled runs)
+          OPERATOR="$OPERATOR_INPUT"
+          if [ -z "$OPERATOR" ]; then
+            OPERATOR="all"
+          fi
+
+          # Run our custom script
+          case "$OPERATOR" in
+            all)
+              ./bin/update_percona_digests.rb --operator pxc --version "$PXC_VERSION"
+              ./bin/update_percona_digests.rb --operator postgresql --version "$POSTGRESQL_VERSION"
+              ;;
+            pxc)
+              ./bin/update_percona_digests.rb --operator pxc --version "$PXC_VERSION"
+              ;;
+            postgresql)
+              ./bin/update_percona_digests.rb --operator postgresql --version "$POSTGRESQL_VERSION"
+              ;;
+          esac
+
+          # Check if any config files were changed
+          CHANGED_FILES=""
+          if ! git diff --quiet percona-pxc-versions.json; then
+            CHANGED_FILES="$CHANGED_FILES percona-pxc-versions.json"
+          fi
+          if ! git diff --quiet percona-postgresql-versions.json; then
+            CHANGED_FILES="$CHANGED_FILES percona-postgresql-versions.json"
+          fi
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes needed to any Percona config files"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Updated files: $CHANGED_FILES"
+            echo "files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+
+            # Get a representative version for the PR title
+            VERSION=$(git diff -- percona-pxc-versions.json percona-postgresql-versions.json | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | sort -Vu | tail -1 || true)
+            if [ -z "$VERSION" ]; then
+              VERSION="latest"
+            fi
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.update-digests.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update Percona certified digests"
+          title: "Update Percona certified digests"
+          body: |
+            ## Automated Percona Digest Update
+
+            This PR automatically updates the Renovate configuration with the latest certified image digests from Percona operators.
+
+            ### Changes
+            ${{ steps.update-digests.outputs.files }}
+
+            ### Sources
+            - PXC Operator: https://docs.percona.com/percona-operator-for-mysql/pxc/ReleaseNotes/
+            - PostgreSQL Operator: https://docs.percona.com/percona-operator-for-postgresql/latest/ReleaseNotes/
+
+            ### Review Checklist
+            - [ ] Verify the digests match the official Percona release notes
+            - [ ] Check that all required Percona images are included
+            - [ ] Confirm version patterns are correct
+
+            **Note**: This is an automated update. Please review carefully before merging.
+          branch: "update-percona-digests-${{ steps.update-digests.outputs.version }}"
+          delete-branch: true
+
+      - name: Output summary
+        run: |
+          echo "## Percona Digest Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Operator**: ${{ github.event.inputs.operator || 'all' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Changed**: ${{ steps.update-digests.outputs.changed }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.update-digests.outputs.changed }}" = "true" ]; then
+            echo "- **Updated Files**: ${{ steps.update-digests.outputs.files }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Action**: Created PR with updated digests" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Action**: No changes needed" >> $GITHUB_STEP_SUMMARY
+          fi
