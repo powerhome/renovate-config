@@ -16,6 +16,14 @@ Allows Renovate the ability to bump ci-kubed versions in Jenkinsfiles.
 
 Usage: `"extends": ["github>powerhome/renovate-config:ci-kubed-versioning"]`
 
+## deployer-image-versioning
+Allows Renovate the ability to bump pac-deployer image versions in deployer bash scripts.
+Legacy `main-<sha>-<build>` and `master-<sha>-<build>` tags are migrated to
+the latest GitHub release, then future `vX.Y.Z` tags are updated from GitHub
+releases.
+
+Usage: `"extends": ["github>powerhome/renovate-config:deployer-image-versioning"]`
+
 ## use-internal-registry
 Allows Renovate usage of Power's npm-registry.
 

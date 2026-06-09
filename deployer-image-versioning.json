@@ -1,0 +1,46 @@
+{
+    "customManagers": [
+        {
+            "customType": "regex",
+            "managerFilePatterns": [
+                "/(^|/)bin/.*$/",
+                "/(^|/)deploy/.*$/",
+                "/(^|/)scripts?/.*$/",
+                "/(^|/)[^/.]+$/",
+                "/\\.sh$/"
+            ],
+            "matchStrings": [
+                "(?<prefix>DEPLOYER_IMAGE\\s*=\\s*[\"']?image-registry\\.powerapp\\.cloud/app/deployer:)(?:latest|(?:main|master)-[a-f0-9]{40}-\\d+|PR-\\d+-[a-f0-9]{40}-\\d+(?:-amd64)?)"
+            ],
+            "currentValueTemplate": "0.0.0",
+            "datasourceTemplate": "github-releases",
+            "depNameTemplate": "powerhome/pac-deployer",
+            "autoReplaceStringTemplate": "{{{prefix}}}{{{newValue}}}"
+        },
+        {
+            "customType": "regex",
+            "managerFilePatterns": [
+                "/(^|/)bin/.*$/",
+                "/(^|/)deploy/.*$/",
+                "/(^|/)scripts?/.*$/",
+                "/(^|/)[^/.]+$/",
+                "/\\.sh$/"
+            ],
+            "matchStrings": [
+                "(?<prefix>DEPLOYER_IMAGE\\s*=\\s*[\"']?image-registry\\.powerapp\\.cloud/app/deployer:)(?<currentValue>v\\d+\\.\\d+\\.\\d+)"
+            ],
+            "datasourceTemplate": "github-releases",
+            "depNameTemplate": "powerhome/pac-deployer",
+            "autoReplaceStringTemplate": "{{{prefix}}}{{{newValue}}}"
+        }
+    ],
+    "packageRules": [
+        {
+            "matchManagers": ["custom.regex"],
+            "matchDepNames": ["powerhome/pac-deployer"],
+            "groupName": null,
+            "prHourlyLimit": 0,
+            "prConcurrentLimit": 0
+        }
+    ]
+}
