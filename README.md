@@ -123,7 +123,7 @@ Usage: `"extends": ["github>powerhome/renovate-config:ignore-reviewdog-action"]`
 ## Percona presets
 
 ### percona-postgresql-versions
-Restricts Percona PostgreSQL-related Docker updates to images certified together in the blessed Percona PostgreSQL Operator release.
+Restricts Percona PostgreSQL-related Docker and Helm chart updates to versions certified together in the blessed Percona PostgreSQL Operator release.
 
 Usage: `"extends": ["github>powerhome/renovate-config:percona-postgresql-versions"]`
 
@@ -131,6 +131,7 @@ This preset:
 
 - Groups Percona PostgreSQL dependency updates into one Renovate PR.
 - Restricts `allowedVersions` to the certified image versions from Percona's release notes.
+- Restricts the `pg-db` and `pg-operator` Helm charts to the blessed Percona PostgreSQL Operator version.
 - Keeps PMM client updates on the current major version, so a project on PMM `2.x` is not offered PMM `3.x`.
 - Keeps PostgreSQL image updates on the current PostgreSQL major version. For example, a project on PostgreSQL 14 only matches approved PostgreSQL 14 image tags.
 

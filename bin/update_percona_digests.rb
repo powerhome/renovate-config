@@ -15,13 +15,17 @@ class PerconaDigestUpdater
 
   DIGEST_PATTERN = /\A[a-f0-9]{64}\z/i
 
-  OperatorConfig = Struct.new(:name, :github_repo, :docs_base_url, :docs_pattern, :config_file, keyword_init: true) do
+  OperatorConfig = Struct.new(:name, :github_repo, :docs_base_url, :docs_pattern, :config_file, :helm_charts, keyword_init: true) do
     def release_notes_url(version)
       "#{docs_base_url}/#{docs_pattern % version}"
     end
 
     def display_name
       name.upcase
+    end
+
+    def helm_chart_names
+      helm_charts || []
     end
   end
 
@@ -271,6 +275,19 @@ class PerconaDigestUpdater
     private_class_method :postgres_major_matcher
   end
 
+  RenovateHelmChartRule = Struct.new(:chart_name, :version, keyword_init: true) do
+    def to_h
+      {
+        'matchDatasources' => ['helm'],
+        'matchPackageNames' => [chart_name],
+        'allowedVersions' => ImageVersionSet.new(
+          package_name: chart_name,
+          versions: [version]
+        ).allowed_versions_pattern
+      }
+    end
+  end
+
   OPERATORS = {
     'pxc' => OperatorConfig.new(
       name: 'pxc',
@@ -284,7 +301,11 @@ class PerconaDigestUpdater
       github_repo: 'percona/percona-postgresql-operator',
       docs_base_url: 'https://docs.percona.com/percona-operator-for-postgresql/latest/ReleaseNotes',
       docs_pattern: 'Kubernetes-Operator-for-PostgreSQL-RN%s.html',
-      config_file: 'percona-postgresql-versions.json'
+      config_file: 'percona-postgresql-versions.json',
+      helm_charts: [
+        'pg-db',
+        'pg-operator'
+      ]
     )
   }.freeze
 
@@ -403,20 +424,27 @@ class PerconaDigestUpdater
     package_rules = renovate_config['packageRules'] || []
 
     package_rules.reject! do |rule|
-      generated_image_rule?(rule)
+      generated_image_rule?(rule) || generated_helm_chart_rule?(rule)
     end
 
     certified_image_catalog.image_version_sets.each do |image_version_set|
       package_rules.concat(package_rules_for(image_version_set))
     end
 
+    @config.helm_chart_names.each do |chart_name|
+      package_rules << RenovateHelmChartRule.new(
+        chart_name: chart_name,
+        version: @version
+      ).to_h
+    end
+
     # Update the general Percona rule with all allowed versions
     package_rules.each do |rule|
       next unless percona_aggregate_rule?(rule)
 
-      rule['matchDatasources'] = ['docker']
-      rule['matchPackageNames'] = certified_image_catalog.package_names
-      rule['allowedVersions'] = certified_image_catalog.allowed_versions_pattern
+      rule['matchDatasources'] = aggregate_datasources
+      rule['matchPackageNames'] = aggregate_package_names(certified_image_catalog)
+      rule['allowedVersions'] = aggregate_allowed_versions_pattern(certified_image_catalog)
       rule['pinDigests'] = true
     end
 
@@ -512,11 +540,36 @@ class PerconaDigestUpdater
     package_names.any? { |name| name.include?('percona') }
   end
 
+  def aggregate_datasources
+    datasources = ['docker']
+    datasources << 'helm' unless @config.helm_chart_names.empty?
+    datasources
+  end
+
+  def aggregate_package_names(certified_image_catalog)
+    (certified_image_catalog.package_names + @config.helm_chart_names).sort
+  end
+
+  def aggregate_allowed_versions_pattern(certified_image_catalog)
+    ImageVersionSet.new(
+      package_name: 'aggregate',
+      versions: certified_image_catalog.image_version_sets.flat_map(&:versions) + [@version]
+    ).allowed_versions_pattern
+  end
+
   def generated_image_rule?(rule)
     package_names = rule['matchPackageNames']
     package_names &&
       package_names.one? &&
       package_names.first.start_with?('percona/') &&
+      !rule.key?('groupName')
+  end
+
+  def generated_helm_chart_rule?(rule)
+    package_names = rule['matchPackageNames']
+    package_names &&
+      package_names.one? &&
+      @config.helm_chart_names.include?(package_names.first) &&
       !rule.key?('groupName')
   end
 
