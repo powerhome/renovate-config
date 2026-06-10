@@ -319,6 +319,7 @@ class PerconaDigestUpdater
   RenovateHelmChartRule = Struct.new(:chart_name, :version, keyword_init: true) do
     def to_h
       {
+        'description' => "Restrict #{chart_name} updates to the blessed Percona version",
         'matchDatasources' => ['helm'],
         'matchPackageNames' => [chart_name],
         'allowedVersions' => ImageVersionSet.new(
