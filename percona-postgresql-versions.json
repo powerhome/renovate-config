@@ -282,6 +282,7 @@
       "enabled": false
     },
     {
+      "description": "Restrict Helm chart pg-db to Percona's certified operator version",
       "matchDatasources": [
         "helm"
       ],
@@ -291,6 +292,7 @@
       "allowedVersions": "/^(2\\.8\\.2)$/"
     },
     {
+      "description": "Restrict Helm chart pg-operator to Percona's certified operator version",
       "matchDatasources": [
         "helm"
       ],
