@@ -12,11 +12,14 @@
         "percona/percona-pgbackrest",
         "percona/percona-pgbouncer",
         "percona/percona-postgresql-operator",
-        "percona/pmm-client"
+        "percona/pmm-client",
+        "pg-db",
+        "pg-operator"
       ],
       "allowedVersions": "/^(1\\.25\\.0\\-1|2\\.8\\.2|2\\.8\\.2\\-ppg13\\.23\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg14\\.20\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg15\\.15\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg16\\.11\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg17\\.7\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg18\\.1\\-postgres\\-gis3\\.5\\.4|2\\.44\\.1\\-1|2\\.57\\.0\\-1|3\\.5\\.0|13\\.23\\-2|14\\.20\\-2|15\\.15\\-2|16\\.11\\-2|17\\.7\\-2|18\\.1\\-3)$/",
       "matchDatasources": [
-        "docker"
+        "docker",
+        "helm"
       ],
       "pinDigests": true
     },
@@ -212,6 +215,89 @@
       "versioning": "semver",
       "allowedVersions": "/^(3\\.5\\.0)$/",
       "pinDigests": true
+    },
+    {
+      "description": "Disable percona/percona-postgresql-operator updates that do not match Percona's certified image digest",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/percona-postgresql-operator"
+      ],
+      "matchJsonata": [
+        "$exists(newDigest) and $not((newVersion = '2.8.2' and (newDigest = '018b0063352fff83d7850d732c80ba6a938c425ac2d9ac7e9a0a270361ff3fc0' or newDigest = 'sha256:018b0063352fff83d7850d732c80ba6a938c425ac2d9ac7e9a0a270361ff3fc0')) or (newVersion = '2.8.2-ppg18.1-postgres-gis3.5.4' and (newDigest = 'a9c58611e1660a1377a579370c0684a5bc12a37df69031bdcf7dac5332d016ad' or newDigest = 'sha256:a9c58611e1660a1377a579370c0684a5bc12a37df69031bdcf7dac5332d016ad')) or (newVersion = '2.8.2-ppg17.7-postgres-gis3.3.8' and (newDigest = '64246fa0fe2213f2321bdd565181578fd84e8d745b044553b60d45c41dbf3e5c' or newDigest = 'sha256:64246fa0fe2213f2321bdd565181578fd84e8d745b044553b60d45c41dbf3e5c')) or (newVersion = '2.8.2-ppg16.11-postgres-gis3.3.8' and (newDigest = 'd4467fe931e6403538a1f9831c7c97f84177027bfb226a9a7e021026506bb4d7' or newDigest = 'sha256:d4467fe931e6403538a1f9831c7c97f84177027bfb226a9a7e021026506bb4d7')) or (newVersion = '2.8.2-ppg15.15-postgres-gis3.3.8' and (newDigest = 'd9680938ae31bc0c2d1fd89cda306b1bdb9b4aef424d706896460de71a2311e2' or newDigest = 'sha256:d9680938ae31bc0c2d1fd89cda306b1bdb9b4aef424d706896460de71a2311e2')) or (newVersion = '2.8.2-ppg14.20-postgres-gis3.3.8' and (newDigest = '71947a799ea4e957bf6a9dd6a4ff055037a335d9d71186452b64e05d1ce68c38' or newDigest = 'sha256:71947a799ea4e957bf6a9dd6a4ff055037a335d9d71186452b64e05d1ce68c38')) or (newVersion = '2.8.2-ppg13.23-postgres-gis3.3.8' and (newDigest = '9b75f33ee9d7e95a0d9ea9e619533878d92814183a0ed9ad59bc69813b11a84d' or newDigest = 'sha256:9b75f33ee9d7e95a0d9ea9e619533878d92814183a0ed9ad59bc69813b11a84d')))"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Disable percona/percona-distribution-postgresql updates that do not match Percona's certified image digest",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/percona-distribution-postgresql"
+      ],
+      "matchJsonata": [
+        "$exists(newDigest) and $not((newVersion = '18.1-3' and (newDigest = '940859b7c45d1217ba852e8c5e5500832daf61c6914d5af33808251cb23f0102' or newDigest = 'sha256:940859b7c45d1217ba852e8c5e5500832daf61c6914d5af33808251cb23f0102')) or (newVersion = '17.7-2' and (newDigest = '7beb6a0d9fd4c4e8125c5cb43c48e8b189a4dca7b4f1ec1e433b49956d4203d6' or newDigest = 'sha256:7beb6a0d9fd4c4e8125c5cb43c48e8b189a4dca7b4f1ec1e433b49956d4203d6')) or (newVersion = '16.11-2' and (newDigest = '80882a55997c58b7a4dd5defc6482d99dc31c11fbd206f788e540a74ffab4823' or newDigest = 'sha256:80882a55997c58b7a4dd5defc6482d99dc31c11fbd206f788e540a74ffab4823')) or (newVersion = '15.15-2' and (newDigest = '100ef9920d70d0ff53a0466f9b077ba3f1828c31b330a08a6e6e11802b870178' or newDigest = 'sha256:100ef9920d70d0ff53a0466f9b077ba3f1828c31b330a08a6e6e11802b870178')) or (newVersion = '14.20-2' and (newDigest = '011bae00abeb266352aa6c8e127396b0a3fb5877f0112f5291172624b5556120' or newDigest = 'sha256:011bae00abeb266352aa6c8e127396b0a3fb5877f0112f5291172624b5556120')) or (newVersion = '13.23-2' and (newDigest = '39ef40f72704e8e782ed43fb5a5072ee557fd410b85b9d2177b332ce39b888f5' or newDigest = 'sha256:39ef40f72704e8e782ed43fb5a5072ee557fd410b85b9d2177b332ce39b888f5')))"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Disable percona/percona-pgbouncer updates that do not match Percona's certified image digest",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/percona-pgbouncer"
+      ],
+      "matchJsonata": [
+        "$exists(newDigest) and $not((newVersion = '1.25.0-1' and (newDigest = 'bf2f325cc733b96dc360c2386c8931ed9e3513f55cb425e59033e1e56737134f' or newDigest = 'sha256:bf2f325cc733b96dc360c2386c8931ed9e3513f55cb425e59033e1e56737134f')))"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Disable percona/percona-pgbackrest updates that do not match Percona's certified image digest",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/percona-pgbackrest"
+      ],
+      "matchJsonata": [
+        "$exists(newDigest) and $not((newVersion = '2.57.0-1' and (newDigest = '2bf7265f84210671bc5c0928cc772202c0e6054d426eb6ecf86279d69e831b96' or newDigest = 'sha256:2bf7265f84210671bc5c0928cc772202c0e6054d426eb6ecf86279d69e831b96')))"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Disable percona/pmm-client updates that do not match Percona's certified image digest",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/pmm-client"
+      ],
+      "matchJsonata": [
+        "$exists(newDigest) and $not((newVersion = '2.44.1-1' and (newDigest = '52a8fb5e8f912eef1ff8a117ea323c401e278908ce29928dafc23fac1db4f1e3' or newDigest = 'sha256:52a8fb5e8f912eef1ff8a117ea323c401e278908ce29928dafc23fac1db4f1e3')) or (newVersion = '3.5.0' and (newDigest = '352aee74f25b3c1c4cd9dff1f378a0c3940b315e551d170c09953bf168531e4a' or newDigest = 'sha256:352aee74f25b3c1c4cd9dff1f378a0c3940b315e551d170c09953bf168531e4a')))"
+      ],
+      "enabled": false
+    },
+    {
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchPackageNames": [
+        "pg-db"
+      ],
+      "allowedVersions": "/^(2\\.8\\.2)$/"
+    },
+    {
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchPackageNames": [
+        "pg-operator"
+      ],
+      "allowedVersions": "/^(2\\.8\\.2)$/"
     }
   ]
 }

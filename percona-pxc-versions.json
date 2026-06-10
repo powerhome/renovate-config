@@ -14,11 +14,14 @@
         "percona/percona-xtradb-cluster",
         "percona/percona-xtradb-cluster-operator",
         "percona/pmm-client",
-        "percona/proxysql2"
+        "percona/proxysql2",
+        "pxc-db",
+        "pxc-operator"
       ],
       "allowedVersions": "/^(1\\.18\\.0|2\\.4\\.29|2\\.7\\.3|2\\.8\\.15|2\\.44\\.1\\-1|3\\.3\\.1|4\\.0\\.1|5\\.7\\.34\\-31\\.51|5\\.7\\.36\\-31\\.55|5\\.7\\.39\\-31\\.61|5\\.7\\.42\\-31\\.65|5\\.7\\.44\\-31\\.65|8\\.0\\.35\\-27\\.1|8\\.0\\.35\\-34\\.1|8\\.0\\.36\\-28\\.1|8\\.0\\.39\\-30\\.1|8\\.0\\.41\\-32\\.1|8\\.0\\.42\\-33\\.1|8\\.4\\.0\\-3\\.1|8\\.4\\.5\\-5\\.1)$/",
       "matchDatasources": [
-        "docker"
+        "docker",
+        "helm"
       ],
       "pinDigests": true
     },
@@ -143,6 +146,115 @@
       "versioning": "semver",
       "allowedVersions": "/^(8\\.4\\.5\\-5\\.1)$/",
       "pinDigests": true
+    },
+    {
+      "description": "Disable percona/percona-xtradb-cluster-operator updates that do not match Percona's certified image digest",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/percona-xtradb-cluster-operator"
+      ],
+      "matchJsonata": [
+        "$exists(newDigest) and $not((newVersion = '1.18.0' and (newDigest = '0eca0b096482c7d09792c15fee00dbdcd0fbf3cd487dab60eb2774b025681e85' or newDigest = 'sha256:0eca0b096482c7d09792c15fee00dbdcd0fbf3cd487dab60eb2774b025681e85')))"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Disable percona/haproxy updates that do not match Percona's certified image digest",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/haproxy"
+      ],
+      "matchJsonata": [
+        "$exists(newDigest) and $not((newVersion = '2.8.15' and (newDigest = '49e6987a1c8b27e9111ae1f1168dd51f2840eb6d939ffc157358f0f259819006' or newDigest = 'sha256:49e6987a1c8b27e9111ae1f1168dd51f2840eb6d939ffc157358f0f259819006')))"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Disable percona/proxysql2 updates that do not match Percona's certified image digest",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/proxysql2"
+      ],
+      "matchJsonata": [
+        "$exists(newDigest) and $not((newVersion = '2.7.3' and (newDigest = '51fedf9de05e4f130d5b08388511536fb1e1050a24ffc21bedb0f0b61a236567' or newDigest = 'sha256:51fedf9de05e4f130d5b08388511536fb1e1050a24ffc21bedb0f0b61a236567')))"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Disable percona/percona-xtrabackup updates that do not match Percona's certified image digest",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/percona-xtrabackup"
+      ],
+      "matchJsonata": [
+        "$exists(newDigest) and $not((newVersion = '8.4.0-3.1' and (newDigest = '01071522753ad94e11a897859bba4713316d08e493e23555c0094d68da223730' or newDigest = 'sha256:01071522753ad94e11a897859bba4713316d08e493e23555c0094d68da223730')) or (newVersion = '8.0.35-34.1' and (newDigest = '2dc127b08971051296d421b22aa861bb0330cf702b4b0246ae31053b0f01911e' or newDigest = 'sha256:2dc127b08971051296d421b22aa861bb0330cf702b4b0246ae31053b0f01911e')) or (newVersion = '2.4.29' and (newDigest = '11b92a7f7362379fc6b0de92382706153f2ac007ebf0d7ca25bac2c7303fdf10' or newDigest = 'sha256:11b92a7f7362379fc6b0de92382706153f2ac007ebf0d7ca25bac2c7303fdf10')))"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Disable percona/fluentbit updates that do not match Percona's certified image digest",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/fluentbit"
+      ],
+      "matchJsonata": [
+        "$exists(newDigest) and $not((newVersion = '4.0.1' and (newDigest = 'a4ab7dd10379ccf74607f6b05225c4996eeff53b628bda94e615781a1f58b779' or newDigest = 'sha256:a4ab7dd10379ccf74607f6b05225c4996eeff53b628bda94e615781a1f58b779')))"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Disable percona/pmm-client updates that do not match Percona's certified image digest",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/pmm-client"
+      ],
+      "matchJsonata": [
+        "$exists(newDigest) and $not((newVersion = '3.3.1' and (newDigest = '29a9bb1c69fef8bedc4d4a9ed0ae8224a8623fd3eb8676ef40b13fd044188cb4' or newDigest = 'sha256:29a9bb1c69fef8bedc4d4a9ed0ae8224a8623fd3eb8676ef40b13fd044188cb4')) or (newVersion = '2.44.1-1' and (newDigest = '52a8fb5e8f912eef1ff8a117ea323c401e278908ce29928dafc23fac1db4f1e3' or newDigest = 'sha256:52a8fb5e8f912eef1ff8a117ea323c401e278908ce29928dafc23fac1db4f1e3')))"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Disable percona/percona-xtradb-cluster updates that do not match Percona's certified image digest",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/percona-xtradb-cluster"
+      ],
+      "matchJsonata": [
+        "$exists(newDigest) and $not((newVersion = '8.4.5-5.1' and (newDigest = '918c54c11c96bf61bb3f32315ef6b344b7b1d68a0457a47a3804eca3932b2b17' or newDigest = 'sha256:918c54c11c96bf61bb3f32315ef6b344b7b1d68a0457a47a3804eca3932b2b17')) or (newVersion = '8.0.42-33.1' and (newDigest = '476851339090e44bb72760ae718fc36beb73a6028a29459e849271649018d546' or newDigest = 'sha256:476851339090e44bb72760ae718fc36beb73a6028a29459e849271649018d546')) or (newVersion = '8.0.41-32.1' and (newDigest = 'd9c84884a12631306d5a33a079e30bf7b65d3d380b07b397d7b1b6a642cc6bff' or newDigest = 'sha256:d9c84884a12631306d5a33a079e30bf7b65d3d380b07b397d7b1b6a642cc6bff')) or (newVersion = '8.0.39-30.1' and (newDigest = '6a53a6ad4e7d2c2fb404d274d993414a22cb67beecf7228df9d5d994e7a09966' or newDigest = 'sha256:6a53a6ad4e7d2c2fb404d274d993414a22cb67beecf7228df9d5d994e7a09966')) or (newVersion = '8.0.36-28.1' and (newDigest = 'b5cc4034ccfb0186d6a734cb749ae17f013b027e9e64746b2c876e8beef379b3' or newDigest = 'sha256:b5cc4034ccfb0186d6a734cb749ae17f013b027e9e64746b2c876e8beef379b3')) or (newVersion = '8.0.35-27.1' and (newDigest = '1ef24953591ef1c1ce39576843d5615d4060fd09458c7a39ebc3e2eda7ef486b' or newDigest = 'sha256:1ef24953591ef1c1ce39576843d5615d4060fd09458c7a39ebc3e2eda7ef486b')) or (newVersion = '5.7.44-31.65' and (newDigest = '36fafdef46485839d4ff7c6dc73b4542b07031644c0152e911acb9734ff2be85' or newDigest = 'sha256:36fafdef46485839d4ff7c6dc73b4542b07031644c0152e911acb9734ff2be85')) or (newVersion = '5.7.42-31.65' and (newDigest = '9dab86780f86ec9caf8e1032a563c131904b75a37edeaec159a93f7d0c16c603' or newDigest = 'sha256:9dab86780f86ec9caf8e1032a563c131904b75a37edeaec159a93f7d0c16c603')) or (newVersion = '5.7.39-31.61' and (newDigest = '9013170a71559bbac92ba9c2e986db9bda3a8a9e39ee1ee350e0ee94488bb6d7' or newDigest = 'sha256:9013170a71559bbac92ba9c2e986db9bda3a8a9e39ee1ee350e0ee94488bb6d7')) or (newVersion = '5.7.36-31.55' and (newDigest = 'c7bad990fc7ca0fde89240e921052f49da08b67c7c6dc54239593d61710be504' or newDigest = 'sha256:c7bad990fc7ca0fde89240e921052f49da08b67c7c6dc54239593d61710be504')) or (newVersion = '5.7.34-31.51' and (newDigest = 'f8d51d7932b9bb1a5a896c7ae440256230eb69b55798ff37397aabfd58b80ccb' or newDigest = 'sha256:f8d51d7932b9bb1a5a896c7ae440256230eb69b55798ff37397aabfd58b80ccb')))"
+      ],
+      "enabled": false
+    },
+    {
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchPackageNames": [
+        "pxc-db"
+      ],
+      "allowedVersions": "/^(1\\.18\\.0)$/"
+    },
+    {
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchPackageNames": [
+        "pxc-operator"
+      ],
+      "allowedVersions": "/^(1\\.18\\.0)$/"
     }
   ]
 }
