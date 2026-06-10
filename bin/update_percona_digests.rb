@@ -611,7 +611,7 @@ class PerconaDigestUpdater
   def aggregate_allowed_versions_pattern(certified_image_catalog)
     ImageVersionSet.new(
       package_name: 'aggregate',
-      versions: certified_image_catalog.image_version_sets.flat_map(&:versions) + [@version]
+      versions: certified_image_catalog.image_version_sets.flat_map(&:versions)
     ).allowed_versions_pattern
   end
 
