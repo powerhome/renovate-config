@@ -423,6 +423,9 @@ class PerconaDigestUpdater
   rescue JSON::ParserError => e
     raise ReleaseFetchError,
           "Failed to parse GitHub releases response for #{@config.name} from #{github_api_url}: #{e.message}"
+  rescue SocketError, SystemCallError, Timeout::Error, OpenSSL::SSL::SSLError => e
+    raise ReleaseFetchError,
+          "Failed to fetch GitHub releases for #{@config.name} from #{github_api_url}: #{e.class}: #{e.message}"
   end
 
   def fetch_release_notes
@@ -438,6 +441,10 @@ class PerconaDigestUpdater
     end
 
     response.body
+  rescue SocketError, SystemCallError, Timeout::Error, OpenSSL::SSL::SSLError => e
+    raise ReleaseFetchError,
+          "Failed to fetch release notes for #{@config.name} #{@version} from #{@release_notes_url}: " \
+          "#{e.class}: #{e.message}"
   end
 
   def parse_certified_image_catalog(html_content)
