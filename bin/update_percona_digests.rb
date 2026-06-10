@@ -69,10 +69,18 @@ class PerconaDigestUpdater
         next unless certified_image.supported_architecture?
 
         image_key = [certified_image.package_name, certified_image.version]
-        next if seen_images[image_key]
+        if seen_images.key?(image_key)
+          if seen_images[image_key] != certified_image.digest
+            raise ReleaseParseError,
+                  "Conflicting certified digests found for #{certified_image.package_name}:#{certified_image.version} " \
+                  "at #{url}: #{seen_images[image_key]} and #{certified_image.digest}"
+          end
+
+          next
+        end
 
         certified_images << certified_image
-        seen_images[image_key] = true
+        seen_images[image_key] = certified_image.digest
       end
 
       unless certified_images.empty?
