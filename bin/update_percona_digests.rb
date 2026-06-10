@@ -504,7 +504,12 @@ class PerconaDigestUpdater
       rule['matchDatasources'] = aggregate_datasources
       rule['matchPackageNames'] = aggregate_package_names(certified_image_catalog)
       rule['allowedVersions'] = aggregate_allowed_versions_pattern(certified_image_catalog)
-      rule['pinDigests'] = true
+
+      if @config.helm_chart_names.any?
+        rule.delete('pinDigests')
+      else
+        rule['pinDigests'] = true
+      end
     end
 
     renovate_config['packageRules'] = package_rules
