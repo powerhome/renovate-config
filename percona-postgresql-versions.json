@@ -12,11 +12,10 @@
         "percona/percona-pgbackrest",
         "percona/percona-pgbouncer",
         "percona/percona-postgresql-operator",
-        "percona/pmm-client",
         "pg-db",
         "pg-operator"
       ],
-      "allowedVersions": "/^(1\\.25\\.0\\-1|2\\.8\\.2|2\\.8\\.2\\-ppg13\\.23\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg14\\.20\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg15\\.15\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg16\\.11\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg17\\.7\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg18\\.1\\-postgres\\-gis3\\.5\\.4|2\\.44\\.1\\-1|2\\.57\\.0\\-1|3\\.5\\.0|13\\.23\\-2|14\\.20\\-2|15\\.15\\-2|16\\.11\\-2|17\\.7\\-2|18\\.1\\-3)$/",
+      "allowedVersions": "/^(1\\.25\\.0\\-1|2\\.8\\.2|2\\.8\\.2\\-ppg13\\.23\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg14\\.20\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg15\\.15\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg16\\.11\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg17\\.7\\-postgres\\-gis3\\.3\\.8|2\\.8\\.2\\-ppg18\\.1\\-postgres\\-gis3\\.5\\.4|2\\.57\\.0\\-1|13\\.23\\-2|14\\.20\\-2|15\\.15\\-2|16\\.11\\-2|17\\.7\\-2|18\\.1\\-3)$/",
       "matchDatasources": [
         "docker",
         "helm"
@@ -199,6 +198,10 @@
       "matchPackageNames": [
         "percona/pmm-client"
       ],
+      "matchFileNames": [
+        "**/postgresql.yaml.erb",
+        "**/percona_pgcluster.yaml.erb"
+      ],
       "matchCurrentVersion": "/^2\\./",
       "versioning": "semver",
       "allowedVersions": "/^(2\\.44\\.1\\-1)$/",
@@ -210,6 +213,10 @@
       ],
       "matchPackageNames": [
         "percona/pmm-client"
+      ],
+      "matchFileNames": [
+        "**/postgresql.yaml.erb",
+        "**/percona_pgcluster.yaml.erb"
       ],
       "matchCurrentVersion": "/^3\\./",
       "versioning": "semver",

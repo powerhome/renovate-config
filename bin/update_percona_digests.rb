@@ -15,7 +15,7 @@ class PerconaDigestUpdater
 
   DIGEST_PATTERN = /\A[a-f0-9]{64}\z/i
 
-  OperatorConfig = Struct.new(:name, :github_repo, :docs_base_url, :docs_pattern, :config_file, :helm_charts, keyword_init: true) do
+  OperatorConfig = Struct.new(:name, :github_repo, :docs_base_url, :docs_pattern, :config_file, :helm_charts, :pmm_file_patterns, keyword_init: true) do
     def release_notes_url(version)
       "#{docs_base_url}/#{docs_pattern % version}"
     end
@@ -26,6 +26,10 @@ class PerconaDigestUpdater
 
     def helm_chart_names
       helm_charts || []
+    end
+
+    def pmm_match_file_names
+      pmm_file_patterns || []
     end
   end
 
@@ -220,10 +224,11 @@ class PerconaDigestUpdater
   end
 
   RenovatePackageRule = Struct.new(:image_version_set, keyword_init: true) do
-    def self.for_current_major(major, image_version_set, versioning: nil)
+    def self.for_current_major(major, image_version_set, versioning: nil, match_file_names: nil)
       new(image_version_set: image_version_set).to_h(
         match_current_version: "/^#{Regexp.escape(major)}\\./",
-        versioning: versioning
+        versioning: versioning,
+        match_file_names: match_file_names
       )
     end
 
@@ -241,11 +246,15 @@ class PerconaDigestUpdater
       )
     end
 
-    def to_h(match_current_version: nil, versioning: nil)
+    def to_h(match_current_version: nil, versioning: nil, match_file_names: nil)
       rule = {
         'matchDatasources' => ['docker'],
         'matchPackageNames' => [image_version_set.package_name],
       }
+
+      if match_file_names
+        rule['matchFileNames'] = match_file_names
+      end
 
       if match_current_version
         rule['matchCurrentVersion'] = match_current_version
@@ -298,6 +307,9 @@ class PerconaDigestUpdater
       helm_charts: [
         'pxc-db',
         'pxc-operator'
+      ],
+      pmm_file_patterns: [
+        '**/mysql.yaml.erb'
       ]
     ),
     'postgresql' => OperatorConfig.new(
@@ -309,6 +321,10 @@ class PerconaDigestUpdater
       helm_charts: [
         'pg-db',
         'pg-operator'
+      ],
+      pmm_file_patterns: [
+        '**/postgresql.yaml.erb',
+        '**/percona_pgcluster.yaml.erb'
       ]
     )
   }.freeze
@@ -469,17 +485,33 @@ class PerconaDigestUpdater
       return postgres_major_package_rules_for(image_version_set)
     end
 
+    if pmm_client?(image_version_set)
+      return pmm_client_package_rules_for(image_version_set)
+    end
+
+    [RenovatePackageRule.new(image_version_set: image_version_set).to_h]
+  end
+
+  def pmm_client_package_rules_for(image_version_set)
+    # PMM client is certified with multiple Percona operators, but a docker image
+    # reference to percona/pmm-client does not identify which operator owns it.
+    # Scope PMM rules to the operator-specific krane template filename convention.
     if postgresql_pmm_client?(image_version_set)
       return image_version_set.major_version_sets.map do |major, major_image_version_set|
         RenovatePackageRule.for_current_major(
           major,
           major_image_version_set,
-          versioning: 'semver'
+          versioning: 'semver',
+          match_file_names: @config.pmm_match_file_names
         )
       end
     end
 
-    [RenovatePackageRule.new(image_version_set: image_version_set).to_h]
+    [
+      RenovatePackageRule.new(image_version_set: image_version_set).to_h(
+        match_file_names: @config.pmm_match_file_names
+      )
+    ]
   end
 
   def mysql_line_package_rules_for(image_version_set)
@@ -536,6 +568,10 @@ class PerconaDigestUpdater
       image_version_set.package_name == 'percona/pmm-client'
   end
 
+  def pmm_client?(image_version_set)
+    image_version_set.package_name == 'percona/pmm-client'
+  end
+
   def percona_aggregate_rule?(rule)
     package_names = rule['matchPackageNames']
     return false unless package_names
@@ -551,14 +587,20 @@ class PerconaDigestUpdater
   end
 
   def aggregate_package_names(certified_image_catalog)
-    (certified_image_catalog.package_names + @config.helm_chart_names).sort
+    (aggregate_image_version_sets(certified_image_catalog).map(&:package_name) + @config.helm_chart_names).sort
   end
 
   def aggregate_allowed_versions_pattern(certified_image_catalog)
     ImageVersionSet.new(
       package_name: 'aggregate',
-      versions: certified_image_catalog.image_version_sets.flat_map(&:versions) + [@version]
+      versions: aggregate_image_version_sets(certified_image_catalog).flat_map(&:versions) + [@version]
     ).allowed_versions_pattern
+  end
+
+  def aggregate_image_version_sets(certified_image_catalog)
+    certified_image_catalog.image_version_sets.reject do |image_version_set|
+      pmm_client?(image_version_set)
+    end
   end
 
   def generated_image_rule?(rule)
