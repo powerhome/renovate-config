@@ -135,6 +135,8 @@ This preset:
 - Keeps PMM client updates on the current major version, so a project on PMM `2.x` is not offered PMM `3.x`.
 - Keeps PostgreSQL image updates on the current PostgreSQL major version. For example, a project on PostgreSQL 14 only matches approved PostgreSQL 14 image tags.
 
+PMM client rules are scoped to PostgreSQL template filenames because the PMM client image is certified with both PXC and PostgreSQL operators. A plain `percona/pmm-client` Docker image reference does not identify which operator owns it, so file scoping avoids applying PostgreSQL-certified PMM updates to PXC clusters when both Percona presets are enabled.
+
 ### percona-pxc-versions
 Restricts Percona PXC-related Docker and Helm chart updates to versions certified together in the blessed Percona PXC Operator release.
 
@@ -145,6 +147,7 @@ This preset:
 - Groups Percona PXC dependency updates into one Renovate PR.
 - Restricts `allowedVersions` to the certified image versions from Percona's release notes.
 - Restricts the `pxc-db` and `pxc-operator` Helm charts to the blessed Percona PXC Operator version.
+- Scopes PMM client updates to MySQL template filenames, so they can use the PXC-certified PMM version.
 - Keeps PXC and XtraBackup updates on the current MySQL compatibility line. For example, a project on `8.0.x` is not offered `8.4.x`, and a project on `5.7.x` is not offered `8.0.x`.
 
 ### Updating Percona presets
