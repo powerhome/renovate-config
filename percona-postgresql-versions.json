@@ -1,8 +1,8 @@
 {
   "packageRules": [
     {
-      "groupName": "Percona PostgreSQL dependencies",
-      "description": "Group all Percona PostgreSQL-related dependencies together",
+      "groupName": "Percona dependencies",
+      "description": "Group all Percona dependencies together",
       "labels": [
         "dependencies",
         "percona-upgrades"
