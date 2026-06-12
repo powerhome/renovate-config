@@ -123,7 +123,7 @@ Usage: `"extends": ["github>powerhome/renovate-config:ignore-reviewdog-action"]`
 ## Percona presets
 
 ### percona-postgresql-versions
-Restricts Percona PostgreSQL-related Docker updates to images certified together in the blessed Percona PostgreSQL Operator release.
+Restricts Percona PostgreSQL-related Docker and Helm chart updates to versions certified together in the blessed Percona PostgreSQL Operator release.
 
 Usage: `"extends": ["github>powerhome/renovate-config:percona-postgresql-versions"]`
 
@@ -131,11 +131,12 @@ This preset:
 
 - Groups Percona PostgreSQL dependency updates into one Renovate PR.
 - Restricts `allowedVersions` to the certified image versions from Percona's release notes.
+- Restricts the `pg-db` and `pg-operator` Helm charts to the blessed Percona PostgreSQL Operator version.
 - Keeps PMM client updates on the current major version, so a project on PMM `2.x` is not offered PMM `3.x`.
 - Keeps PostgreSQL image updates on the current PostgreSQL major version. For example, a project on PostgreSQL 14 only matches approved PostgreSQL 14 image tags.
 
 ### percona-pxc-versions
-Restricts Percona PXC-related Docker updates to images certified together in the blessed Percona PXC Operator release.
+Restricts Percona PXC-related Docker and Helm chart updates to versions certified together in the blessed Percona PXC Operator release.
 
 Usage: `"extends": ["github>powerhome/renovate-config:percona-pxc-versions"]`
 
@@ -143,6 +144,7 @@ This preset:
 
 - Groups Percona PXC dependency updates into one Renovate PR.
 - Restricts `allowedVersions` to the certified image versions from Percona's release notes.
+- Restricts the `pxc-db` and `pxc-operator` Helm charts to the blessed Percona PXC Operator version.
 - Keeps PXC and XtraBackup updates on the current MySQL compatibility line. For example, a project on `8.0.x` is not offered `8.4.x`, and a project on `5.7.x` is not offered `8.0.x`.
 
 ### Updating Percona presets
