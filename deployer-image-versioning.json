@@ -10,12 +10,12 @@
                 "/\\.sh$/"
             ],
             "matchStrings": [
-                "(?<prefix>(?:DEPLOYER_IMAGE\\s*=\\s*[\"']?|image:\\s*[\"']?|docker image inspect\\s+)image-registry\\.powerapp\\.cloud/app/deployer:)(?:(?:latest|(?:main|master)-[a-f0-9]{40}-\\d+|PR-\\d+-[a-f0-9]{40}-\\d+(?:-amd64)?)|(?<currentValue>v\\d+\\.\\d+\\.\\d+)(?:@sha256:[a-f0-9]{64})?)"
+                "(?:DEPLOYER_IMAGE\\s*=\\s*[\"']?|image:\\s*[\"']?|docker image inspect\\s+)image-registry\\.powerapp\\.cloud/app/deployer:(?<depType>(?:latest|(?:main|master)-[a-f0-9]{40}-\\d+|PR-\\d+-[a-f0-9]{40}-\\d+(?:-amd64)?)|(?<currentValue>v\\d+\\.\\d+\\.\\d+)(?:@sha256:[a-f0-9]{64})?)"
             ],
             "currentValueTemplate": "{{#if currentValue}}{{{currentValue}}}{{else}}0.0.0{{/if}}",
             "datasourceTemplate": "github-releases",
             "depNameTemplate": "powerhome/pac-deployer",
-            "autoReplaceStringTemplate": "{{{prefix}}}{{{newValue}}}"
+            "autoReplaceStringTemplate": "{{{replace depType newValue replaceString}}}"
         }
     ],
     "packageRules": [
