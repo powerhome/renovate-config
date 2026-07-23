@@ -16,6 +16,13 @@ Allows Renovate the ability to bump ci-kubed versions in Jenkinsfiles.
 
 Usage: `"extends": ["github>powerhome/renovate-config:ci-kubed-versioning"]`
 
+## ci-kubed-read-token
+Adds a repo-scoped hostRule so the github-releases lookup for powerhome/ci-kubed uses a narrowly-scoped read token instead of the repo's default Renovate job token.
+
+This is only needed by **public** repos. Mend issues public repos' Renovate jobs a GitHub App token scoped to that one repo only (a security measure so a leaked token can't reach private org repos), so the github-releases datasource can't resolve the private ci-kubed repo without this override. Private repos get a broader-scoped token already and don't need it.
+
+Usage: `"extends": ["github>powerhome/renovate-config:ci-kubed-read-token"]`
+
 ## deployer-image-versioning
 Allows Renovate the ability to bump pac-deployer image versions in deployer bash scripts.
 Legacy `main-<sha>-<build>` and `master-<sha>-<build>` tags are migrated to
