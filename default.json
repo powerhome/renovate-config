@@ -13,7 +13,8 @@
         "powerhome/renovate-config:ignore-stalebot-action",
         "powerhome/renovate-config:percona-pxc-versions",
         "powerhome/renovate-config:percona-postgresql-versions",
-        "powerhome/renovate-config:ignore-reviewdog-action"
+        "powerhome/renovate-config:ignore-reviewdog-action",
+        "powerhome/renovate-config:throttle-claude-code-action"
     ],
     "rangeStrategy": "pin",
     "timezone": "America/New_York"
