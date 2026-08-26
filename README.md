@@ -135,6 +135,13 @@ This ensures that reviewdog updates won't be created by Renovate, bringing repos
 
 Usage: `"extends": ["github>powerhome/renovate-config:ignore-reviewdog-action"]`
 
+## throttle-claude-code-action
+Batches `anthropics/claude-code-action` updates into a single PR that Renovate only opens on the first of the month.
+
+Upstream ships patch releases most days, so without this every repo using the action gets a near-daily PR for a version bump nobody reviews. Updates are not ignored — they just arrive monthly instead of continuously. Major updates still get their own PR, and any repo that wants a bump sooner can rebase the open PR or run Renovate manually.
+
+Usage: `"extends": ["github>powerhome/renovate-config:throttle-claude-code-action"]`
+
 ## Percona presets
 
 ### percona-postgresql-versions

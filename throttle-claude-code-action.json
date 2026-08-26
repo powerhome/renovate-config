@@ -1,0 +1,10 @@
+{
+  "packageRules": [
+    {
+      "description": "Batch anthropics/claude-code-action updates into one monthly PR. See https://github.com/powerhome/cortex/pull/121",
+      "matchPackageNames": ["anthropics/claude-code-action"],
+      "groupName": "claude-code-action",
+      "schedule": ["before 4am on the first day of the month"]
+    }
+  ]
+}
