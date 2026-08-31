@@ -156,6 +156,29 @@ This preset:
 - Restricts the `pg-db` and `pg-operator` Helm charts to the blessed Percona PostgreSQL Operator version.
 - Keeps PMM client updates on the current major version, so a project on PMM `2.x` is not offered PMM `3.x`.
 - Keeps PostgreSQL image updates on the current PostgreSQL major version. For example, a project on PostgreSQL 14 only matches approved PostgreSQL 14 image tags.
+- Keeps PostgreSQL image updates on the current image flavour, so a project on a plain `-postgres` image is not offered a PostGIS one, and vice versa.
+- Migrates images off `percona/percona-postgresql-operator` tags whose component has moved to a repository of its own.
+
+The `percona/percona-postgresql-operator` repository hosts several different
+components, distinguished only by a tag suffix — `2.6.0` is the operator itself,
+`2.6.0-ppg16.8-pgbackrest2.54.2` is pgBackRest, and so on. Rules generated from
+the bare operator version are therefore scoped with `matchCurrentVersion` to
+bare `x.y.z` tags. Without that scoping they also match every suffixed tag, and
+Renovate offers the operator image as an upgrade for whatever the tag actually
+is — silently replacing, say, pgBouncer with the operator binary.
+
+Percona has also moved components out of that repository over time: pgBackRest
+and pgBouncer in operator 2.7.0, and the plain PostgreSQL image in 2.8.0, which
+now lives in `percona/percona-distribution-postgresql`. PostGIS images are still
+published in the operator repository. Because Renovate keys rules on package
+name, it cannot see such a move as an upgrade — the old tags simply stop being
+published, and a deployment sits frozen on the last one. The preset declares
+these moves and emits Renovate `replacementName` / `replacementVersion` rules for
+them, so each affected project gets one migration PR pointing at the certified
+image in its new home. The moves are declared explicitly in
+`bin/update_percona_digests.rb` rather than inferred from a component's absence
+from the certified image table, where an absence is far more likely to be a
+documentation omission than a migration.
 
 PMM client rules are scoped to PostgreSQL template filenames because the PMM client image is certified with both PXC and PostgreSQL operators. A plain `percona/pmm-client` Docker image reference does not identify which operator owns it, so file scoping avoids applying PostgreSQL-certified PMM updates to PXC clusters when both Percona presets are enabled.
 
