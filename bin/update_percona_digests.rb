@@ -15,7 +15,30 @@ class PerconaDigestUpdater
 
   DIGEST_PATTERN = /\A[a-f0-9]{64}\z/i
 
-  OperatorConfig = Struct.new(:name, :github_repo, :docs_base_url, :docs_pattern, :config_file, :helm_charts, :pmm_file_patterns, keyword_init: true) do
+  # A tag is the PostGIS flavour if it carries a -postgres-gis segment; anything
+  # else carrying -postgres is the plain distribution flavour.
+  POSTGIS_FLAVOUR = 'gis'
+  PLAIN_POSTGRES_FLAVOUR = 'plain'
+
+  # Everything after the PostgreSQL major in an operator tag, e.g. the ".8" of
+  # ppg16.8 or the ".5.2" of ppg17.5.2. Percona publishes three-segment
+  # PostgreSQL versions, so this repeats rather than matching a single segment.
+  #
+  # Only the replacement matchers use it. Widening the *version* matchers the
+  # same way makes a three-segment PostGIS tag match its ppgNN rule, and
+  # Renovate then leaks that rule's replacement onto sibling deps of the same
+  # package that match no rule at all -- a bare 2.6.0 operator image gets
+  # offered percona-distribution-postgresql. Reproduced on Renovate 44.52.1
+  # with RE2 active; see the PR discussion. Leaving the version matchers at one
+  # optional segment keeps three-segment PostGIS tags falling through, which is
+  # the pre-existing behaviour and merely leaves them un-upgraded.
+  POSTGRES_MINOR_SEGMENTS = '(?:[.-]\\d+)*'
+
+  def self.postgres_flavour(version)
+    version.include?('-postgres-gis') ? POSTGIS_FLAVOUR : PLAIN_POSTGRES_FLAVOUR
+  end
+
+  OperatorConfig = Struct.new(:name, :github_repo, :docs_base_url, :docs_pattern, :config_file, :helm_charts, :pmm_file_patterns, :image_repository_splits, keyword_init: true) do
     def release_notes_url(version)
       "#{docs_base_url}/#{docs_pattern % version}"
     end
@@ -30,6 +53,34 @@ class PerconaDigestUpdater
 
     def pmm_match_file_names
       pmm_file_patterns || []
+    end
+
+    def image_repository_split_list
+      image_repository_splits || []
+    end
+  end
+
+  # Percona has repeatedly moved a component out of the operator's own image
+  # repository, where it lived as a compatibility-suffixed tag, and into a
+  # repository of its own. Renovate keys rules on package name, so it cannot see
+  # such a move as an upgrade: the old tags simply stop being published. Left
+  # alone, a deployment is either frozen on the last suffixed tag or -- worse --
+  # matched to the bare operator tag and handed the operator image in place of
+  # the component. Declare each move so we can emit a Renovate replacement.
+  #
+  # These are facts about Percona's packaging history, not something derivable
+  # from one release's certified image table: a component missing from that
+  # table is far more likely to be a documentation omission than a migration.
+  # The target version is still read from the table, so it stays current.
+  ImageRepositorySplit = Struct.new(
+    :source_package_name,
+    :match_current_version,
+    :package_name,
+    :postgres_major_scoped,
+    keyword_init: true
+  ) do
+    def postgres_major_scoped?
+      !!postgres_major_scoped
     end
   end
 
@@ -162,6 +213,27 @@ class PerconaDigestUpdater
       end
     end
 
+    # PostGIS is a different image flavour, not a newer version of the plain
+    # one, so the two must never be offered to each other. Splitting the sets
+    # by flavour lets each get a matchCurrentVersion that only its own flavour
+    # can satisfy.
+    def postgres_major_flavour_version_sets
+      versions_by_postgres_major.flat_map do |postgres_major, postgres_major_versions|
+        postgres_major_versions.group_by { |version| PerconaDigestUpdater.postgres_flavour(version) }
+          .map do |flavour, flavour_versions|
+            [
+              postgres_major,
+              flavour,
+              ImageVersionSet.new(package_name: package_name, versions: flavour_versions)
+            ]
+          end
+      end
+    end
+
+    def highest_version
+      versions.max_by { |version| PerconaDigestUpdater.version_sort_key(version) }
+    end
+
     def without_postgres_major
       versions_without_postgres_major = versions.reject { |version| postgres_major(version) }
 
@@ -224,6 +296,8 @@ class PerconaDigestUpdater
   end
 
   RenovatePackageRule = Struct.new(:image_version_set, keyword_init: true) do
+    BARE_VERSION_MATCHER = '/^\\d+\\.\\d+\\.\\d+$/'
+
     def self.for_current_major(major, image_version_set, versioning: nil, match_file_names: nil)
       new(image_version_set: image_version_set).to_h(
         match_current_version: "/^#{Regexp.escape(major)}\\./",
@@ -232,9 +306,24 @@ class PerconaDigestUpdater
       )
     end
 
-    def self.for_current_postgres_major(postgres_major, image_version_set, versioning: nil)
+    def self.for_current_postgres_major(postgres_major, image_version_set, flavour: nil, versioning: nil)
       new(image_version_set: image_version_set).to_h(
-        match_current_version: postgres_major_matcher(postgres_major, image_version_set.package_name),
+        match_current_version: postgres_major_matcher(
+          postgres_major,
+          image_version_set.package_name,
+          flavour
+        ),
+        versioning: versioning
+      )
+    end
+
+    # The operator repository hosts several components, told apart only by tag
+    # suffix. A rule generated from the bare operator version must therefore say
+    # so, or it matches every suffixed tag too and offers the operator image as
+    # an upgrade for whatever that tag actually is.
+    def self.for_bare_version(image_version_set, versioning: nil)
+      new(image_version_set: image_version_set).to_h(
+        match_current_version: BARE_VERSION_MATCHER,
         versioning: versioning
       )
     end
@@ -270,18 +359,47 @@ class PerconaDigestUpdater
       )
     end
 
-    def self.postgres_major_matcher(postgres_major, package_name)
+    def self.postgres_major_matcher(postgres_major, package_name, flavour = nil)
       escaped_major = Regexp.escape(postgres_major)
 
       case package_name
       when 'percona/percona-postgresql-operator'
-        "/\\bppg#{escaped_major}(?:[.-]\\d+)?-postgres(?:-|$)/"
+        "/\\bppg#{escaped_major}(?:[.-]\\d+)?#{postgres_flavour_suffix(flavour)}/"
       when 'percona/percona-distribution-postgresql'
         "/^#{escaped_major}\\./"
       end
     end
 
-    private_class_method :postgres_major_matcher
+    def self.postgres_flavour_suffix(flavour)
+      case flavour
+      when PerconaDigestUpdater::POSTGIS_FLAVOUR then '-postgres-gis'
+      when PerconaDigestUpdater::PLAIN_POSTGRES_FLAVOUR then '-postgres$'
+      else '-postgres(?:-|$)'
+      end
+    end
+
+    private_class_method :postgres_major_matcher, :postgres_flavour_suffix
+  end
+
+  # Renovate models a package moving repositories as a "replacement" rather than
+  # a version bump. Naming the target explicitly turns what would otherwise be a
+  # frozen or mis-resolved dependency into one clean migration PR per consumer.
+  RenovateReplacementRule = Struct.new(
+    :source_package_name,
+    :match_current_version,
+    :replacement_package_name,
+    :replacement_version,
+    keyword_init: true
+  ) do
+    def to_h
+      {
+        'matchDatasources' => ['docker'],
+        'matchPackageNames' => [source_package_name],
+        'matchCurrentVersion' => match_current_version,
+        'replacementName' => replacement_package_name,
+        'replacementVersion' => replacement_version
+      }
+    end
   end
 
   RenovateHelmChartRule = Struct.new(:chart_name, :version, keyword_init: true) do
@@ -325,6 +443,28 @@ class PerconaDigestUpdater
       pmm_file_patterns: [
         '**/postgresql.yaml.erb',
         '**/percona_pgcluster.yaml.erb'
+      ],
+      # pgBackRest and pgBouncer left the operator repository in 2.7.0; the plain
+      # PostgreSQL image followed in 2.8.0. The last operator tags carrying them
+      # are 2.6.x and 2.7.x respectively. PostGIS images are still published in
+      # the operator repository, so -postgres-gis tags are deliberately absent
+      # here.
+      image_repository_splits: [
+        ImageRepositorySplit.new(
+          source_package_name: 'percona/percona-postgresql-operator',
+          match_current_version: '/-pgbackrest[\\d.-]*$/',
+          package_name: 'percona/percona-pgbackrest'
+        ),
+        ImageRepositorySplit.new(
+          source_package_name: 'percona/percona-postgresql-operator',
+          match_current_version: '/-pgbouncer[\\d.-]*$/',
+          package_name: 'percona/percona-pgbouncer'
+        ),
+        ImageRepositorySplit.new(
+          source_package_name: 'percona/percona-postgresql-operator',
+          package_name: 'percona/percona-distribution-postgresql',
+          postgres_major_scoped: true
+        )
       ]
     )
   }.freeze
@@ -451,6 +591,8 @@ class PerconaDigestUpdater
       package_rules.concat(package_rules_for(image_version_set))
     end
 
+    package_rules.concat(image_repository_split_rules(certified_image_catalog))
+
     @config.helm_chart_names.each do |chart_name|
       package_rules << RenovateHelmChartRule.new(
         chart_name: chart_name,
@@ -525,20 +667,67 @@ class PerconaDigestUpdater
     image_version_set_without_postgres_major = image_version_set.without_postgres_major
 
     unless image_version_set_without_postgres_major.versions.empty?
-      package_rules << RenovatePackageRule.new(
-        image_version_set: image_version_set_without_postgres_major
-      ).to_h(versioning: versioning_for(image_version_set))
+      package_rules << RenovatePackageRule.for_bare_version(
+        image_version_set_without_postgres_major,
+        versioning: versioning_for(image_version_set)
+      )
     end
 
     package_rules.concat(
-      image_version_set.postgres_major_version_sets.map do |postgres_major, postgres_major_image_version_set|
+      image_version_set.postgres_major_flavour_version_sets.map do |postgres_major, flavour, flavour_image_version_set|
         RenovatePackageRule.for_current_postgres_major(
           postgres_major,
-          postgres_major_image_version_set,
+          flavour_image_version_set,
+          flavour: flavour,
           versioning: versioning_for(image_version_set)
         )
       end
     )
+  end
+
+  # Emitted after every version rule, so that for a tag whose component has
+  # moved the replacement wins over anything a broader rule may have matched.
+  def image_repository_split_rules(certified_image_catalog)
+    image_version_sets_by_package_name = certified_image_catalog.image_version_sets
+      .each_with_object({}) { |set, sets| sets[set.package_name] = set }
+
+    @config.image_repository_split_list.flat_map do |split|
+      target_image_version_set = image_version_sets_by_package_name[split.package_name]
+
+      unless target_image_version_set
+        raise ConfigUpdateError,
+              "#{split.package_name} is declared as the new home of #{split.source_package_name} " \
+              "tags matching #{split.match_current_version || 'a PostgreSQL major'}, but it is absent " \
+              "from the certified images for #{@config.name} #{@version}. Refusing to generate a " \
+              "replacement rule without a version to point it at."
+      end
+
+      replacement_rules_for(split, target_image_version_set)
+    end
+  end
+
+  def replacement_rules_for(split, target_image_version_set)
+    unless split.postgres_major_scoped?
+      return [
+        RenovateReplacementRule.new(
+          source_package_name: split.source_package_name,
+          match_current_version: split.match_current_version,
+          replacement_package_name: split.package_name,
+          replacement_version: target_image_version_set.highest_version
+        ).to_h
+      ]
+    end
+
+    # replacementVersion takes a single value, so scope one rule per PostgreSQL
+    # major. Without that, a 16.x deployment could be handed a 17.x image.
+    target_image_version_set.postgres_major_version_sets.map do |postgres_major, major_image_version_set|
+      RenovateReplacementRule.new(
+        source_package_name: split.source_package_name,
+        match_current_version: "/\\bppg#{Regexp.escape(postgres_major)}#{POSTGRES_MINOR_SEGMENTS}-postgres$/",
+        replacement_package_name: split.package_name,
+        replacement_version: major_image_version_set.highest_version
+      ).to_h
+    end
   end
 
   def versioning_for(image_version_set)
