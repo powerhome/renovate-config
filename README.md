@@ -157,7 +157,7 @@ This preset:
 - Keeps PMM client updates on the current major version, so a project on PMM `2.x` is not offered PMM `3.x`.
 - Keeps PostgreSQL image updates on the current PostgreSQL major version. For example, a project on PostgreSQL 14 only matches approved PostgreSQL 14 image tags.
 - Keeps PostgreSQL image updates on the current image flavour, so a project on a plain `-postgres` image is not offered a PostGIS one, and vice versa. Three-segment PostGIS tags such as `2.7.0-ppg17.5.2-postgres-gis3.3.8` are the exception: they match no rule and are left alone, which is deliberate — see the comment on `POSTGRES_MINOR_SEGMENTS`.
-- Migrates images off `percona/percona-postgresql-operator` tags whose component has moved to a repository of its own.
+- Migrates images off `percona/percona-postgresql-operator` tags whose component has moved to a repository of its own, in the same pull request as the matching operator and chart bump.
 
 The `percona/percona-postgresql-operator` repository hosts several different
 components, distinguished only by a tag suffix — `2.6.0` is the operator itself,
@@ -179,6 +179,15 @@ image in its new home. The moves are declared explicitly in
 `bin/update_percona_digests.rb` rather than inferred from a component's absence
 from the certified image table, where an absence is far more likely to be a
 documentation omission than a migration.
+
+Those replacements are pulled onto the same branch as the operator and chart
+bump, so they arrive as one pull request. They have to land together: a
+replacement applied on its own leaves the cluster running component images from
+a different operator release than the operator, and so does an operator bump
+applied without them. Renovate normally gives every replacement its own branch
+and ignores `groupName` when naming it, so the preset sets `branchTopic` to the
+group's slug instead, which is the one branch-naming option a replacement does
+honour.
 
 PMM client rules are scoped to PostgreSQL template filenames because the PMM client image is certified with both PXC and PostgreSQL operators. A plain `percona/pmm-client` Docker image reference does not identify which operator owns it, so file scoping avoids applying PostgreSQL-certified PMM updates to PXC clusters when both Percona presets are enabled.
 
