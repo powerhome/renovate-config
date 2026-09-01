@@ -253,7 +253,7 @@
       "matchPackageNames": [
         "percona/percona-postgresql-operator"
       ],
-      "matchCurrentVersion": "/\\bppg13(?:[.-]\\d+)?-postgres$/",
+      "matchCurrentVersion": "/\\bppg13(?:[.-]\\d+)*-postgres$/",
       "replacementName": "percona/percona-distribution-postgresql",
       "replacementVersion": "13.23-2"
     },
@@ -264,7 +264,7 @@
       "matchPackageNames": [
         "percona/percona-postgresql-operator"
       ],
-      "matchCurrentVersion": "/\\bppg14(?:[.-]\\d+)?-postgres$/",
+      "matchCurrentVersion": "/\\bppg14(?:[.-]\\d+)*-postgres$/",
       "replacementName": "percona/percona-distribution-postgresql",
       "replacementVersion": "14.20-2"
     },
@@ -275,7 +275,7 @@
       "matchPackageNames": [
         "percona/percona-postgresql-operator"
       ],
-      "matchCurrentVersion": "/\\bppg15(?:[.-]\\d+)?-postgres$/",
+      "matchCurrentVersion": "/\\bppg15(?:[.-]\\d+)*-postgres$/",
       "replacementName": "percona/percona-distribution-postgresql",
       "replacementVersion": "15.15-2"
     },
@@ -286,7 +286,7 @@
       "matchPackageNames": [
         "percona/percona-postgresql-operator"
       ],
-      "matchCurrentVersion": "/\\bppg16(?:[.-]\\d+)?-postgres$/",
+      "matchCurrentVersion": "/\\bppg16(?:[.-]\\d+)*-postgres$/",
       "replacementName": "percona/percona-distribution-postgresql",
       "replacementVersion": "16.11-2"
     },
@@ -297,7 +297,7 @@
       "matchPackageNames": [
         "percona/percona-postgresql-operator"
       ],
-      "matchCurrentVersion": "/\\bppg17(?:[.-]\\d+)?-postgres$/",
+      "matchCurrentVersion": "/\\bppg17(?:[.-]\\d+)*-postgres$/",
       "replacementName": "percona/percona-distribution-postgresql",
       "replacementVersion": "17.7-2"
     },
@@ -308,7 +308,7 @@
       "matchPackageNames": [
         "percona/percona-postgresql-operator"
       ],
-      "matchCurrentVersion": "/\\bppg18(?:[.-]\\d+)?-postgres$/",
+      "matchCurrentVersion": "/\\bppg18(?:[.-]\\d+)*-postgres$/",
       "replacementName": "percona/percona-distribution-postgresql",
       "replacementVersion": "18.1-3"
     },

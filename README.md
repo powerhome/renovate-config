@@ -156,7 +156,7 @@ This preset:
 - Restricts the `pg-db` and `pg-operator` Helm charts to the blessed Percona PostgreSQL Operator version.
 - Keeps PMM client updates on the current major version, so a project on PMM `2.x` is not offered PMM `3.x`.
 - Keeps PostgreSQL image updates on the current PostgreSQL major version. For example, a project on PostgreSQL 14 only matches approved PostgreSQL 14 image tags.
-- Keeps PostgreSQL image updates on the current image flavour, so a project on a plain `-postgres` image is not offered a PostGIS one, and vice versa.
+- Keeps PostgreSQL image updates on the current image flavour, so a project on a plain `-postgres` image is not offered a PostGIS one, and vice versa. Three-segment PostGIS tags such as `2.7.0-ppg17.5.2-postgres-gis3.3.8` are the exception: they match no rule and are left alone, which is deliberate — see the comment on `POSTGRES_MINOR_SEGMENTS`.
 - Migrates images off `percona/percona-postgresql-operator` tags whose component has moved to a repository of its own.
 
 The `percona/percona-postgresql-operator` repository hosts several different

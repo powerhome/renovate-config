@@ -20,6 +20,20 @@ class PerconaDigestUpdater
   POSTGIS_FLAVOUR = 'gis'
   PLAIN_POSTGRES_FLAVOUR = 'plain'
 
+  # Everything after the PostgreSQL major in an operator tag, e.g. the ".8" of
+  # ppg16.8 or the ".5.2" of ppg17.5.2. Percona publishes three-segment
+  # PostgreSQL versions, so this repeats rather than matching a single segment.
+  #
+  # Only the replacement matchers use it. Widening the *version* matchers the
+  # same way makes a three-segment PostGIS tag match its ppgNN rule, and
+  # Renovate then leaks that rule's replacement onto sibling deps of the same
+  # package that match no rule at all -- a bare 2.6.0 operator image gets
+  # offered percona-distribution-postgresql. Reproduced on Renovate 44.52.1
+  # with RE2 active; see the PR discussion. Leaving the version matchers at one
+  # optional segment keeps three-segment PostGIS tags falling through, which is
+  # the pre-existing behaviour and merely leaves them un-upgraded.
+  POSTGRES_MINOR_SEGMENTS = '(?:[.-]\\d+)*'
+
   def self.postgres_flavour(version)
     version.include?('-postgres-gis') ? POSTGIS_FLAVOUR : PLAIN_POSTGRES_FLAVOUR
   end
@@ -709,7 +723,7 @@ class PerconaDigestUpdater
     target_image_version_set.postgres_major_version_sets.map do |postgres_major, major_image_version_set|
       RenovateReplacementRule.new(
         source_package_name: split.source_package_name,
-        match_current_version: "/\\bppg#{Regexp.escape(postgres_major)}(?:[.-]\\d+)?-postgres$/",
+        match_current_version: "/\\bppg#{Regexp.escape(postgres_major)}#{POSTGRES_MINOR_SEGMENTS}-postgres$/",
         replacement_package_name: split.package_name,
         replacement_version: major_image_version_set.highest_version
       ).to_h
