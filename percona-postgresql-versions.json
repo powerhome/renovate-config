@@ -314,6 +314,18 @@
     },
     {
       "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/percona-postgresql-operator"
+      ],
+      "matchUpdateTypes": [
+        "replacement"
+      ],
+      "branchTopic": "percona-dependencies"
+    },
+    {
+      "matchDatasources": [
         "helm"
       ],
       "matchPackageNames": [

@@ -402,6 +402,26 @@ class PerconaDigestUpdater
     end
   end
 
+  # Renovate always routes a replacement onto its own branch, and groupName has
+  # no effect there -- confirmed against 44.54.0, where setting one changes
+  # nothing while additionalBranchPrefix on the same rule does apply. That
+  # splits a repository move away from the operator and chart bump it has to
+  # land with, and neither half is safe alone: each leaves the cluster running
+  # component images from a different operator release than the operator itself.
+  # branchTopic is the one lever that does apply to a replacement, so point it
+  # at the group's slug to pull the replacements onto the group's branch, and
+  # therefore into the same pull request.
+  RenovateReplacementBranchRule = Struct.new(:source_package_name, :branch_topic, keyword_init: true) do
+    def to_h
+      {
+        'matchDatasources' => ['docker'],
+        'matchPackageNames' => [source_package_name],
+        'matchUpdateTypes' => ['replacement'],
+        'branchTopic' => branch_topic
+      }
+    end
+  end
+
   RenovateHelmChartRule = Struct.new(:chart_name, :version, keyword_init: true) do
     def to_h
       {
@@ -592,6 +612,7 @@ class PerconaDigestUpdater
     end
 
     package_rules.concat(image_repository_split_rules(certified_image_catalog))
+    package_rules.concat(replacement_branch_rules(package_rules))
 
     @config.helm_chart_names.each do |chart_name|
       package_rules << RenovateHelmChartRule.new(
@@ -704,6 +725,24 @@ class PerconaDigestUpdater
 
       replacement_rules_for(split, target_image_version_set)
     end
+  end
+
+  def replacement_branch_rules(package_rules)
+    group_name = package_rules.find { |rule| percona_aggregate_rule?(rule) }&.dig('groupName')
+    return [] if group_name.nil?
+
+    @config.image_repository_split_list.map(&:source_package_name).uniq.map do |source_package_name|
+      RenovateReplacementBranchRule.new(
+        source_package_name: source_package_name,
+        branch_topic: group_slug(group_name)
+      ).to_h
+    end
+  end
+
+  # Mirrors how Renovate slugifies a groupName into the branch it uses for the
+  # group, so the replacements land on that same branch.
+  def group_slug(group_name)
+    group_name.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/\A-+|-+\z/, '')
   end
 
   def replacement_rules_for(split, target_image_version_set)
