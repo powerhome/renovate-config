@@ -122,16 +122,20 @@ Adding the "dependencies" label will make the PRs created by Renovate exempt fro
 Usage: `"extends": ["github>powerhome/renovate-config:add-labels"]`
 
 ## ignore-stalebot-action
-Ignores Renovate PRs that are created by the updates to the [stalebot](https://github.com/powerhome/software/blob/main/modules/github-repo/stale.yml.tpl) action.
+Stops Renovate touching the [stalebot workflow](https://github.com/powerhome/software/blob/main/modules/github-repo/stale.yml.tpl) that terraform renders into every repo as `.github/workflows/stale.yml`.
 
-This ensures that Stalebot updates won't be created by Renovate, bringing repos out of compliance with the Software repo's state.
+Merging a Renovate bump of that file brings the repo out of compliance with the Software repo's state, and the nightly drift check then opens a PR reverting it.
+
+The rule is scoped to the rendered path rather than to the `actions/stale` package. Scoping it by package name also froze the template the file is rendered from, so the pin could only ever be moved by hand, and it froze unrelated workflows of a repo's own that happened to use the same action. Neither is terraform's to protect.
 
 Usage: `"extends": ["github>powerhome/renovate-config:ignore-stalebot-action"]`
 
 ## ignore-reviewdog-action
-Ignores Renovate PRs that are created by the updates to the [reviewdog](https://github.com/powerhome/software/blob/main/modules/github-repo/reviewdog.tpl) action.
+Stops Renovate touching the [reviewdog workflow](https://github.com/powerhome/software/blob/main/modules/github-repo/reviewdog.tpl) that terraform renders into scanned repos as `.github/workflows/reviewdog.yml`.
 
-This ensures that reviewdog updates won't be created by Renovate, bringing repos out of compliance with the Software repo's state.
+As with the stalebot workflow, merging a Renovate bump of that file brings the repo out of compliance with the Software repo's state.
+
+The rule is scoped to the rendered path for the same reason, and covers every dependency in that file rather than naming the reviewdog actions specifically.
 
 Usage: `"extends": ["github>powerhome/renovate-config:ignore-reviewdog-action"]`
 

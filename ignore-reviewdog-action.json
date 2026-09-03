@@ -1,12 +1,9 @@
 {
-    "packageRules": [
-      {
-        "matchPackageNames": ["reviewdog/action-brakeman", "reviewdog/action-setup"],
-        "enabled": false
-      },
-      {
-        "matchFileNames": [".github/workflows/reviewdog.yml"],
-        "enabled": false
-      }
-    ]
-  }
+  "packageRules": [
+    {
+      "description": "The reviewdog workflow is rendered into scanned repos by terraform from powerhome/software. Scope this to the rendered path rather than to the reviewdog packages, so the template it is rendered from stays updatable and a repo's own workflows using the same actions are left alone.",
+      "matchFileNames": [".github/workflows/reviewdog.yml"],
+      "enabled": false
+    }
+  ]
+}
