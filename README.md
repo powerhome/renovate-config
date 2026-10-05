@@ -146,6 +146,13 @@ Upstream ships patch releases most days, so without this every repo using the ac
 
 Usage: `"extends": ["github>powerhome/renovate-config:throttle-claude-code-action"]`
 
+## watchtower-weekly
+Opt in preset for Watchtower repos. Renovate opens PRs only on Monday mornings, puts all minor and patch updates in one PR and all digest updates in a second PR. Each major update keeps its own PR. Security fixes follow the same schedule and grouping instead of opening right away.
+
+List it after the default preset in `extends`. Its groups then win over the groups from the default preset, while the repo's own `packageRules` still win over it.
+
+Usage: `"extends": ["github>powerhome/renovate-config", "github>powerhome/renovate-config:watchtower-weekly"]`
+
 ## Percona presets
 
 ### percona-postgresql-versions
