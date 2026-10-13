@@ -1,4 +1,10 @@
 {
+  "description": [
+    "Renovate decisions the Watchtower team applies across all PAC repos.",
+    "Schedules: weekly by default, monthly for lock file maintenance. Security updates ignore schedules.",
+    "minimumReleaseAgeBehaviour timestamp-optional: some sources (several Docker registries, git tags) publish no release date, and timestamp-required would never propose those updates.",
+    "vulnerabilityFixStrategy highest: fix with the latest version so related fixes don't land on versions too old for each other. allowedVersions caps still apply. It can't be scoped per datasource, so for pip, gem or npm it can also open a separate major-version security PR."
+  ],
   "extends": [
     "powerhome/renovate-config",
     "powerhome/renovate-config:group-github-actions",
