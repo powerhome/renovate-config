@@ -1,0 +1,9 @@
+{
+  "packageRules": [
+    {
+      "description": "Group GitHub Actions updates into a single PR",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions"
+    }
+  ]
+}

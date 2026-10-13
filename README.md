@@ -146,6 +146,34 @@ Upstream ships patch releases most days, so without this every repo using the ac
 
 Usage: `"extends": ["github>powerhome/renovate-config:throttle-claude-code-action"]`
 
+## group-github-actions
+Groups all GitHub Actions updates in a repo into a single PR.
+
+Usage: `"extends": ["github>powerhome/renovate-config:group-github-actions"]`
+
+## ignore-argo-diff-action
+Stops Renovate pinning or bumping references to the [argo-diff](https://github.com/powerhome/argo-diff) GitHub Actions.
+
+Consumers reference argo-diff on `@main` so they always run the latest version. Inside argo-diff itself, the references to its own composite actions also float on `@main`, so a merge to main does not trigger an endless digest-bump loop.
+
+Usage: `"extends": ["github>powerhome/renovate-config:ignore-argo-diff-action"]`
+
+## pac-kubernetes-version
+Keeps the `kindest/node` image on the same Kubernetes minor version as the PAC clusters, so local and CI test clusters match what we run.
+
+Raise the `allowedVersions` cap when the PAC fleet moves to a newer Kubernetes minor.
+
+Usage: `"extends": ["github>powerhome/renovate-config:pac-kubernetes-version"]`
+
+## pac
+Bundle for repositories that make up PAC (Power Application Cloud). It extends the `default` preset plus the PAC-specific presets below, so a PAC repo only needs this one entry, followed by any repo-specific settings.
+
+- `group-github-actions`
+- `ignore-argo-diff-action`
+- `pac-kubernetes-version`
+
+Usage: `"extends": ["github>powerhome/renovate-config:pac"]`
+
 ## Percona presets
 
 ### percona-postgresql-versions
