@@ -169,6 +169,7 @@ Bundle for repositories that make up PAC (Power Application Cloud), so a PAC rep
 
 It extends `default`, `group-github-actions` and `group-go`, and adds these PAC decisions of its own:
 
+- Schedules: new update branches are created weekly, on Mondays before 4am. Lock file maintenance and GitHub Actions updates run monthly instead, on the 1st before 4am. Security updates ignore schedules and still open immediately. All times use the `timezone` from `default`.
 - Fixes vulnerabilities with the latest available version instead of the earliest patched one, so related fixes don't land on versions too old for each other. `allowedVersions` caps still apply. This can't be scoped per datasource, so for pip, gem or npm packages it can also propose a separate major-version security PR next to the in-major fix.
 - Stops Renovate pinning or bumping references to the [argo-diff](https://github.com/powerhome/argo-diff) GitHub Actions. Consumers reference argo-diff on `@main` so they always run the latest version. Inside argo-diff itself, references to its own composite actions also float on `@main`, so a merge to main does not trigger an endless digest-bump loop.
 - Keeps the `kindest/node` image on the same Kubernetes minor version as the PAC clusters. Raise the `allowedVersions` cap when the PAC fleet moves to a newer Kubernetes minor.

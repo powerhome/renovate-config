@@ -4,10 +4,19 @@
     "powerhome/renovate-config:group-github-actions",
     "powerhome/renovate-config:group-go"
   ],
+  "schedule": ["* 0-3 * * 1"],
+  "lockFileMaintenance": {
+    "schedule": ["* 0-3 1 * *"]
+  },
   "vulnerabilityAlerts": {
     "vulnerabilityFixStrategy": "highest"
   },
   "packageRules": [
+    {
+      "description": "GitHub Actions updates only once a month, on the 1st before 4am.",
+      "matchManagers": ["github-actions"],
+      "schedule": ["* 0-3 1 * *"]
+    },
     {
       "description": "Do not pin or bump powerhome/argo-diff action references. They float on @main so consumers always run the latest version, and so argo-diff's own references to its composite actions do not cause an endless digest-bump loop.",
       "matchManagers": ["github-actions"],
