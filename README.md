@@ -165,17 +165,7 @@ Renovate applies `vulnerabilityAlerts` as a forced override after all `packageRu
 Usage: `"extends": ["github>powerhome/renovate-config:group-go"]`
 
 ## pac
-Bundle for repositories that make up PAC (Power Application Cloud), so a PAC repo only needs this one entry, followed by any repo-specific settings.
-
-It extends `default`, `group-github-actions` and `group-go`, and adds these PAC decisions of its own:
-
-- Schedules: new update branches are created weekly, on Mondays before 4am (`schedule:weekly`). Lock file maintenance, digest-only updates and GitHub Actions updates run monthly instead, on the 1st before 4am (`schedule:monthly`). Security updates ignore schedules and still open immediately. All times use the `timezone` from `default`.
-- Waits 7 days after a release before proposing major, minor, patch and digest updates. This replaces the 3 days that `config:best-practices` sets for npm. Security updates are not delayed. `minimumReleaseAgeBehaviour` is `timestamp-optional`: some sources, such as several Docker registries and git tags, publish no release date, and with the default `timestamp-required` those updates would never be proposed.
-- Fixes vulnerabilities with the latest available version instead of the earliest patched one, so related fixes don't land on versions too old for each other. `allowedVersions` caps still apply. This can't be scoped per datasource, so for pip, gem or npm packages it can also propose a separate major-version security PR next to the in-major fix.
-- Stops Renovate pinning or bumping references to the [argo-diff](https://github.com/powerhome/argo-diff) GitHub Actions. Consumers reference argo-diff on `@main` so they always run the latest version. Inside argo-diff itself, references to its own composite actions also float on `@main`, so a merge to main does not trigger an endless digest-bump loop.
-- Keeps the `kindest/node` image on the same Kubernetes minor version as the PAC clusters. Raise the `allowedVersions` cap when the PAC fleet moves to a newer Kubernetes minor.
-
-The bundle's own `packageRules` come after the rules of the presets it extends. A repo's own `packageRules` come after the bundle's, so they can still override it.
+Bundle for repositories that make up PAC (Power Application Cloud). It extends `default`, `group-github-actions` and `group-go`, and holds Renovate config decisions the Watchtower team made to apply across all PAC repos. See the `description` of each rule in `pac.json` for the reasoning.
 
 Usage: `"extends": ["github>powerhome/renovate-config:pac"]`
 
