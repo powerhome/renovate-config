@@ -153,58 +153,27 @@ Groups all GitHub Actions updates in a repo into a single PR.
 
 Usage: `"extends": ["github>powerhome/renovate-config:group-github-actions"]`
 
-## group-go-version
-Groups Go version updates from `go.mod`, the `actions/setup-go` workflow input and the `golang` Docker image into a single PR, so they stay in sync.
+## group-go
+Go settings that keep Go updates consistent and mergeable:
 
-It also bumps the `go` directive in `go.mod`, which Renovate otherwise leaves behind. This overrides the default `rangeStrategy` of `pin` for that one dependency.
+- Groups Go version updates from `go.mod`, the `actions/setup-go` workflow input and the `golang` Docker image into a single PR, so they stay in sync. It also bumps the `go` directive in `go.mod`, which Renovate otherwise leaves behind. This overrides the default `rangeStrategy` of `pin` for that one dependency.
+- Runs `go mod tidy` after Renovate updates Go modules, so `go.sum` stays consistent and tidy checks in CI pass. `postUpdateOptions` is a list that a repo's own setting replaces rather than extends, so a repo that sets other post-update options must include `gomodTidy` itself.
+- Puts all Go module security updates into a single PR. Fixes for related Go modules often depend on each other, so one PR per module tends to fail CI on its own. Security updates for every other datasource keep one PR per package, as before.
 
-Usage: `"extends": ["github>powerhome/renovate-config:group-go-version"]`
+Renovate applies `vulnerabilityAlerts` as a forced override after all `packageRules`, so the security grouping can't be scoped with `matchDatasources`. Instead, `groupName` and `groupSlug` are templates that only differ for the `go` datasource. A template that renders empty for other datasources would put all of them on one broken branch, which is why the non-Go branch keeps a per-package value. Major security updates for other datasources get a `major-` branch prefix.
 
-## group-go-security-updates
-Puts all Go module security updates in a repo into a single PR. Fixes for related Go modules often depend on each other, so one PR per module tends to fail CI on its own.
-
-Security updates of every other datasource keep one PR per package, as before.
-
-Renovate applies `vulnerabilityAlerts` as a forced override after all `packageRules`, so the grouping can't be scoped with `matchDatasources`. Instead, `groupName` and `groupSlug` are templates that only differ for the `go` datasource. A template that renders empty for other datasources would put all of them on one broken branch, which is why the non-Go branch keeps a per-package value.
-
-Usage: `"extends": ["github>powerhome/renovate-config:group-go-security-updates"]`
-
-## gomod-tidy
-Runs `go mod tidy` after Renovate updates Go modules, so `go.sum` stays consistent and tidy checks in CI pass.
-
-`postUpdateOptions` is a list that a repo's own setting replaces rather than extends. A repo that sets other post-update options must include `gomodTidy` itself.
-
-Usage: `"extends": ["github>powerhome/renovate-config:gomod-tidy"]`
-
-## vulnerability-fix-highest
-Fixes vulnerabilities with the latest available version instead of the earliest patched one. With the earliest patched version, related fixes can land on versions too old for each other. Version caps set with `allowedVersions` still apply.
-
-Usage: `"extends": ["github>powerhome/renovate-config:vulnerability-fix-highest"]`
-
-## ignore-argo-diff-action
-Stops Renovate pinning or bumping references to the [argo-diff](https://github.com/powerhome/argo-diff) GitHub Actions.
-
-Consumers reference argo-diff on `@main` so they always run the latest version. Inside argo-diff itself, the references to its own composite actions also float on `@main`, so a merge to main does not trigger an endless digest-bump loop.
-
-Usage: `"extends": ["github>powerhome/renovate-config:ignore-argo-diff-action"]`
-
-## pac-kubernetes-version
-Keeps the `kindest/node` image on the same Kubernetes minor version as the PAC clusters, so local and CI test clusters match what we run.
-
-Raise the `allowedVersions` cap when the PAC fleet moves to a newer Kubernetes minor.
-
-Usage: `"extends": ["github>powerhome/renovate-config:pac-kubernetes-version"]`
+Usage: `"extends": ["github>powerhome/renovate-config:group-go"]`
 
 ## pac
-Bundle for repositories that make up PAC (Power Application Cloud). It extends the `default` preset plus the PAC-specific presets below, so a PAC repo only needs this one entry, followed by any repo-specific settings.
+Bundle for repositories that make up PAC (Power Application Cloud), so a PAC repo only needs this one entry, followed by any repo-specific settings.
 
-- `group-github-actions`
-- `group-go-version`
-- `group-go-security-updates`
-- `gomod-tidy`
-- `ignore-argo-diff-action`
-- `pac-kubernetes-version`
-- `vulnerability-fix-highest`
+It extends `default`, `group-github-actions` and `group-go`, and adds these PAC decisions of its own:
+
+- Fixes vulnerabilities with the latest available version instead of the earliest patched one, so related fixes don't land on versions too old for each other. `allowedVersions` caps still apply. This can't be scoped per datasource, so for pip, gem or npm packages it can also propose a separate major-version security PR next to the in-major fix.
+- Stops Renovate pinning or bumping references to the [argo-diff](https://github.com/powerhome/argo-diff) GitHub Actions. Consumers reference argo-diff on `@main` so they always run the latest version. Inside argo-diff itself, references to its own composite actions also float on `@main`, so a merge to main does not trigger an endless digest-bump loop.
+- Keeps the `kindest/node` image on the same Kubernetes minor version as the PAC clusters. Raise the `allowedVersions` cap when the PAC fleet moves to a newer Kubernetes minor.
+
+The bundle's own `packageRules` come after the rules of the presets it extends. A repo's own `packageRules` come after the bundle's, so they can still override it.
 
 Usage: `"extends": ["github>powerhome/renovate-config:pac"]`
 

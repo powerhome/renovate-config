@@ -1,4 +1,19 @@
 {
+  "packageRules": [
+    {
+      "description": "Upgrade Go in one PR: go.mod, setup-go and the golang image move together.",
+      "matchDepNames": ["go", "golang"],
+      "groupName": "go version",
+      "commitMessageTopic": "Go"
+    },
+    {
+      "description": "Bump the go.mod go directive too; by default Renovate leaves it behind.",
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["golang"],
+      "rangeStrategy": "bump"
+    }
+  ],
+  "postUpdateOptions": ["gomodTidy"],
   "vulnerabilityAlerts": {
     "description": "Put all Go module security updates in one PR. Fixes for related Go modules often need each other, so separate PRs fail on their own. Other security updates keep one PR per package: the name and slug below only differ for the go datasource. Renovate forces vulnerabilityAlerts over packageRules, so this can't be scoped with matchDatasources.",
     "groupName": "{{#if (equals datasource 'go')}}Go module security updates{{else}}{{{depName}}} security update{{/if}}",
