@@ -160,6 +160,27 @@ It also bumps the `go` directive in `go.mod`, which Renovate otherwise leaves be
 
 Usage: `"extends": ["github>powerhome/renovate-config:group-go-version"]`
 
+## group-go-security-updates
+Puts all Go module security updates in a repo into a single PR. Fixes for related Go modules often depend on each other, so one PR per module tends to fail CI on its own.
+
+Security updates of every other datasource keep one PR per package, as before.
+
+Renovate applies `vulnerabilityAlerts` as a forced override after all `packageRules`, so the grouping can't be scoped with `matchDatasources`. Instead, `groupName` and `groupSlug` are templates that only differ for the `go` datasource. A template that renders empty for other datasources would put all of them on one broken branch, which is why the non-Go branch keeps a per-package value.
+
+Usage: `"extends": ["github>powerhome/renovate-config:group-go-security-updates"]`
+
+## gomod-tidy
+Runs `go mod tidy` after Renovate updates Go modules, so `go.sum` stays consistent and tidy checks in CI pass.
+
+`postUpdateOptions` is a list that a repo's own setting replaces rather than extends. A repo that sets other post-update options must include `gomodTidy` itself.
+
+Usage: `"extends": ["github>powerhome/renovate-config:gomod-tidy"]`
+
+## vulnerability-fix-highest
+Fixes vulnerabilities with the latest available version instead of the earliest patched one. With the earliest patched version, related fixes can land on versions too old for each other. Version caps set with `allowedVersions` still apply.
+
+Usage: `"extends": ["github>powerhome/renovate-config:vulnerability-fix-highest"]`
+
 ## ignore-argo-diff-action
 Stops Renovate pinning or bumping references to the [argo-diff](https://github.com/powerhome/argo-diff) GitHub Actions.
 
@@ -179,8 +200,11 @@ Bundle for repositories that make up PAC (Power Application Cloud). It extends t
 
 - `group-github-actions`
 - `group-go-version`
+- `group-go-security-updates`
+- `gomod-tidy`
 - `ignore-argo-diff-action`
 - `pac-kubernetes-version`
+- `vulnerability-fix-highest`
 
 Usage: `"extends": ["github>powerhome/renovate-config:pac"]`
 
