@@ -151,6 +151,13 @@ Groups all GitHub Actions updates in a repo into a single PR.
 
 Usage: `"extends": ["github>powerhome/renovate-config:group-github-actions"]`
 
+## group-go-version
+Groups Go version updates from `go.mod`, the `actions/setup-go` workflow input and the `golang` Docker image into a single PR, so they stay in sync.
+
+It also bumps the `go` directive in `go.mod`, which Renovate otherwise leaves behind. This overrides the default `rangeStrategy` of `pin` for that one dependency.
+
+Usage: `"extends": ["github>powerhome/renovate-config:group-go-version"]`
+
 ## ignore-argo-diff-action
 Stops Renovate pinning or bumping references to the [argo-diff](https://github.com/powerhome/argo-diff) GitHub Actions.
 
@@ -169,6 +176,7 @@ Usage: `"extends": ["github>powerhome/renovate-config:pac-kubernetes-version"]`
 Bundle for repositories that make up PAC (Power Application Cloud). It extends the `default` preset plus the PAC-specific presets below, so a PAC repo only needs this one entry, followed by any repo-specific settings.
 
 - `group-github-actions`
+- `group-go-version`
 - `ignore-argo-diff-action`
 - `pac-kubernetes-version`
 

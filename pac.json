@@ -2,6 +2,7 @@
   "extends": [
     "powerhome/renovate-config",
     "powerhome/renovate-config:group-github-actions",
+    "powerhome/renovate-config:group-go-version",
     "powerhome/renovate-config:ignore-argo-diff-action",
     "powerhome/renovate-config:pac-kubernetes-version"
   ]
