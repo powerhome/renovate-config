@@ -19,6 +19,11 @@
       "minimumReleaseAge": "7 days"
     },
     {
+      "description": "Digest-only updates (same tag, new digest, usually a rebuilt base image) only once a month. Digests are still pinned and still move with tag updates.",
+      "matchUpdateTypes": ["digest"],
+      "extends": ["schedule:monthly"]
+    },
+    {
       "description": "GitHub Actions updates only once a month.",
       "matchManagers": ["github-actions"],
       "extends": ["schedule:monthly"]
