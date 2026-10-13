@@ -149,6 +149,8 @@ Usage: `"extends": ["github>powerhome/renovate-config:throttle-claude-code-actio
 ## group-github-actions
 Groups all GitHub Actions updates in a repo into a single PR.
 
+`anthropics/claude-code-action` is excluded, so it keeps the monthly group from `throttle-claude-code-action`. The built-in `group:githubArtifactActions` group from `config:best-practices` is absorbed into this one.
+
 Usage: `"extends": ["github>powerhome/renovate-config:group-github-actions"]`
 
 ## group-go-version

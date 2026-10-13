@@ -1,8 +1,9 @@
 {
   "packageRules": [
     {
-      "description": "Group GitHub Actions updates into a single PR",
+      "description": "Group GitHub Actions updates into a single PR. anthropics/claude-code-action is left out so it keeps its own monthly group from throttle-claude-code-action.",
       "matchManagers": ["github-actions"],
+      "matchPackageNames": ["!anthropics/claude-code-action"],
       "groupName": "GitHub Actions"
     }
   ]
