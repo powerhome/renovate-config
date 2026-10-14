@@ -1,0 +1,50 @@
+{
+  "description": [
+    "Renovate decisions the Watchtower team applies across all PAC repos.",
+    "Schedules: weekly by default, monthly for lock file maintenance. Security updates ignore schedules.",
+    "minimumReleaseAgeBehaviour timestamp-optional: some sources (several Docker registries, git tags) publish no release date, and timestamp-required would never propose those updates.",
+    "vulnerabilityFixStrategy highest: fix with the latest version so related fixes don't land on versions too old for each other. allowedVersions caps still apply. It can't be scoped per datasource, so for pip, gem or npm it can also open a separate major-version security PR."
+  ],
+  "extends": [
+    "powerhome/renovate-config",
+    "powerhome/renovate-config:group-github-actions",
+    "powerhome/renovate-config:group-go",
+    "schedule:weekly"
+  ],
+  "lockFileMaintenance": {
+    "extends": ["schedule:monthly"]
+  },
+  "minimumReleaseAgeBehaviour": "timestamp-optional",
+  "vulnerabilityAlerts": {
+    "vulnerabilityFixStrategy": "highest"
+  },
+  "packageRules": [
+    {
+      "description": "Wait 7 days after a release before proposing it. Set in a rule so it also replaces the 3 days that config:best-practices sets for npm. Security updates are not delayed.",
+      "matchUpdateTypes": ["major", "minor", "patch", "digest"],
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "Digest-only updates (same tag, new digest, usually a rebuilt base image) only once a month. Digests are still pinned and still move with tag updates.",
+      "matchUpdateTypes": ["digest"],
+      "extends": ["schedule:monthly"]
+    },
+    {
+      "description": "GitHub Actions updates only once a month.",
+      "matchManagers": ["github-actions"],
+      "extends": ["schedule:monthly"]
+    },
+    {
+      "description": "Do not pin or bump powerhome/argo-diff action references. They float on @main so consumers always run the latest version, and so argo-diff's own references to its composite actions do not cause an endless digest-bump loop.",
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["powerhome/argo-diff"],
+      "enabled": false
+    },
+    {
+      "description": "Keep the kind node image on the same Kubernetes minor as the PAC clusters. Raise when the fleet moves to a newer minor.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["kindest/node"],
+      "allowedVersions": "<1.35.0"
+    }
+  ]
+}

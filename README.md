@@ -146,6 +146,29 @@ Upstream ships patch releases most days, so without this every repo using the ac
 
 Usage: `"extends": ["github>powerhome/renovate-config:throttle-claude-code-action"]`
 
+## group-github-actions
+Groups all GitHub Actions updates in a repo into a single PR.
+
+`anthropics/claude-code-action` is excluded, so it keeps the monthly group from `throttle-claude-code-action`. The built-in `group:githubArtifactActions` group from `config:best-practices` is absorbed into this one.
+
+Usage: `"extends": ["github>powerhome/renovate-config:group-github-actions"]`
+
+## group-go
+Go settings that keep Go updates consistent and mergeable:
+
+- Groups Go version updates from `go.mod`, the `actions/setup-go` workflow input and the `golang` Docker image into a single PR, so they stay in sync. It also bumps the `go` directive in `go.mod`, which Renovate otherwise leaves behind. This overrides the default `rangeStrategy` of `pin` for that one dependency.
+- Runs `go mod tidy` after Renovate updates Go modules, so `go.sum` stays consistent and tidy checks in CI pass. `postUpdateOptions` is a list that a repo's own setting replaces rather than extends, so a repo that sets other post-update options must include `gomodTidy` itself.
+- Puts all Go module security updates into a single PR. Fixes for related Go modules often depend on each other, so one PR per module tends to fail CI on its own. Security updates for every other datasource keep one PR per package, as before.
+
+Renovate applies `vulnerabilityAlerts` as a forced override after all `packageRules`, so the security grouping can't be scoped with `matchDatasources`. Instead, `groupName` and `groupSlug` are templates that only differ for the `go` datasource. A template that renders empty for other datasources would put all of them on one broken branch, which is why the non-Go branch keeps a per-package value. Major security updates for other datasources get a `major-` branch prefix.
+
+Usage: `"extends": ["github>powerhome/renovate-config:group-go"]`
+
+## pac
+Bundle for repositories that make up PAC (Power Application Cloud). It extends `default`, `group-github-actions` and `group-go`, and holds Renovate config decisions the Watchtower team made to apply across all PAC repos. See the `description` of each rule in `pac.json` for the reasoning.
+
+Usage: `"extends": ["github>powerhome/renovate-config:pac"]`
+
 ## Percona presets
 
 ### percona-postgresql-versions
