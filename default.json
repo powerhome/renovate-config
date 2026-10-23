@@ -17,5 +17,20 @@
         "powerhome/renovate-config:throttle-claude-code-action"
     ],
     "rangeStrategy": "pin",
-    "timezone": "America/New_York"
+    "timezone": "America/New_York",
+    "minimumReleaseAge": "3 days",
+    "minimumReleaseAgeBehaviour": "timestamp-required",
+    "internalChecksFilter": "strict",
+    "packageRules": [
+        {
+            "extends": [
+                "powerhome/renovate-config:powerhome-release-age-source"
+            ]
+        },
+        {
+            "extends": [
+                "powerhome/renovate-config:powerhome-release-age-packages"
+            ]
+        }
+    ]
 }

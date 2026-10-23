@@ -1,0 +1,28 @@
+{
+    "description": "Do not delay Powerhome packages or NIP images when source metadata is absent.",
+    "matchPackageNames": [
+        "playbook-ui",
+        "playbook_ui",
+        "nitro_intelligence",
+        "omniauth-nitro-id",
+        "rubocop-powerhome",
+        "cittadella",
+        "data_taster",
+        "dep_shield",
+        "lumberaxe",
+        "nitro_config",
+        "cobra_commander",
+        "@powerhome/**",
+        "powerhome/**",
+        "github.com/powerhome/**",
+        "ghcr.io/powerhome/**",
+        "docker.io/powerhome/**",
+        "image-registry.powerapp.cloud/nip-vllm/**",
+        "image-registry.powerapp.cloud/nip-operator/**",
+        "image-registry.powerapp.cloud/nip-dashboard/**",
+        "image-registry.powerapp.cloud/nitro-web/**",
+        "image-registry.powerapp.cloud/power-gis/**",
+        "image-registry.powerapp.cloud/nitro-id/**"
+    ],
+    "minimumReleaseAge": null
+}

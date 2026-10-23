@@ -45,6 +45,12 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["kindest/node"],
       "allowedVersions": "<1.35.0"
+    },
+    {
+      "extends": ["powerhome/renovate-config:powerhome-release-age-source"]
+    },
+    {
+      "extends": ["powerhome/renovate-config:powerhome-release-age-packages"]
     }
   ]
 }

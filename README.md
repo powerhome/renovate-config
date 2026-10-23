@@ -4,6 +4,10 @@ Renovate configuration presets for Power organization
 ## default
 Base configuration that inherits multiple different configurations.
 
+Every repository inheriting this preset waits three days before Renovate proposes third-party releases. Strict internal checks hold update branches and pull requests until the release age passes. Powerhome-published dependencies are exempt, using source URLs and known package or image namespaces; third-party packages mirrored in internal registries are not exempt.
+
+The policy requires release timestamps, so third-party releases without usable timestamps can remain pending. Renovate security fixes and special update types such as lockfile maintenance retain their upstream behavior. Repository-specific settings can override the shared defaults. The PAC preset retains its seven-day third-party delay and references the same Powerhome exemptions after its own rules. The exemptions live in `powerhome-release-age-source.json` and `powerhome-release-age-packages.json`; edit those files to change the shared first-party policy.
+
 Usage: `"extends": ["github>powerhome/renovate-config"]`
 
 ## temporary-fixes

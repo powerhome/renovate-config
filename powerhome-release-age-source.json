@@ -1,0 +1,7 @@
+{
+    "description": "Do not delay packages published from Powerhome repositories.",
+    "matchSourceUrls": [
+        "https://github.com/powerhome/**"
+    ],
+    "minimumReleaseAge": null
+}
