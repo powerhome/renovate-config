@@ -1,22 +1,10 @@
 {
-    "description": "Do not delay Powerhome packages or NIP images when source metadata is absent.",
+    "description": "Exempt fully qualified Powerhome container identities; image labels are not trusted.",
+    "matchDatasources": [
+        "docker"
+    ],
     "matchPackageNames": [
-        "playbook-ui",
-        "playbook_ui",
-        "nitro_intelligence",
-        "omniauth-nitro-id",
-        "rubocop-powerhome",
-        "cittadella",
-        "data_taster",
-        "dep_shield",
-        "lumberaxe",
-        "nitro_config",
-        "cobra_commander",
-        "@powerhome/**",
-        "powerhome/**",
-        "github.com/powerhome/**",
         "ghcr.io/powerhome/**",
-        "docker.io/powerhome/**",
         "image-registry.powerapp.cloud/nip-vllm/**",
         "image-registry.powerapp.cloud/nip-operator/**",
         "image-registry.powerapp.cloud/nip-dashboard/**",

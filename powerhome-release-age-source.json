@@ -1,7 +1,14 @@
 {
-    "description": "Do not delay packages published from Powerhome repositories.",
-    "matchSourceUrls": [
-        "https://github.com/powerhome/**"
+    "description": "Exempt releases and tags fetched from actual Powerhome repositories on GitHub.",
+    "matchDatasources": [
+        "github-tags",
+        "github-releases"
+    ],
+    "matchPackageNames": [
+        "/^powerhome\\/[A-Za-z0-9_][A-Za-z0-9_.-]*$/"
+    ],
+    "registryUrls": [
+        "https://github.com"
     ],
     "minimumReleaseAge": null
 }

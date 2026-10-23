@@ -1,0 +1,13 @@
+{
+    "description": "Exempt Git dependencies whose configured remote is a Powerhome GitHub repository.",
+    "matchDatasources": [
+        "git-tags",
+        "git-refs"
+    ],
+    "matchPackageNames": [
+        "/^https:\\/\\/github\\.com\\/powerhome\\/[A-Za-z0-9_][A-Za-z0-9_.-]*$/",
+        "/^git@github\\.com:powerhome\\/[A-Za-z0-9_][A-Za-z0-9_.-]*$/",
+        "/^ssh:\\/\\/git@github\\.com\\/powerhome\\/[A-Za-z0-9_][A-Za-z0-9_.-]*$/"
+    ],
+    "minimumReleaseAge": null
+}

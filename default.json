@@ -29,6 +29,26 @@
         },
         {
             "extends": [
+                "powerhome/renovate-config:powerhome-release-age-git"
+            ]
+        },
+        {
+            "extends": [
+                "powerhome/renovate-config:powerhome-release-age-npm"
+            ]
+        },
+        {
+            "extends": [
+                "powerhome/renovate-config:powerhome-release-age-rubygems"
+            ]
+        },
+        {
+            "extends": [
+                "powerhome/renovate-config:powerhome-release-age-docker-hub"
+            ]
+        },
+        {
+            "extends": [
                 "powerhome/renovate-config:powerhome-release-age-packages"
             ]
         }
