@@ -1,0 +1,16 @@
+{
+    "description": "Exempt fully qualified Powerhome container identities; image labels are not trusted.",
+    "matchDatasources": [
+        "docker"
+    ],
+    "matchPackageNames": [
+        "ghcr.io/powerhome/**",
+        "image-registry.powerapp.cloud/nip-vllm/**",
+        "image-registry.powerapp.cloud/nip-operator/**",
+        "image-registry.powerapp.cloud/nip-dashboard/**",
+        "image-registry.powerapp.cloud/nitro-web/**",
+        "image-registry.powerapp.cloud/power-gis/**",
+        "image-registry.powerapp.cloud/nitro-id/**"
+    ],
+    "minimumReleaseAge": null
+}

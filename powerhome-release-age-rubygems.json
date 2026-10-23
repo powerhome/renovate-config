@@ -1,0 +1,21 @@
+{
+    "description": "Exempt known Powerhome gem identities fetched from RubyGems.org.",
+    "matchDatasources": [
+        "rubygems"
+    ],
+    "matchPackageNames": [
+        "playbook_ui",
+        "nitro_intelligence",
+        "omniauth-nitro-id",
+        "rubocop-powerhome",
+        "data_taster",
+        "dep_shield",
+        "lumberaxe",
+        "nitro_config",
+        "cobra_commander"
+    ],
+    "registryUrls": [
+        "https://rubygems.org"
+    ],
+    "minimumReleaseAge": null
+}
