@@ -4,12 +4,12 @@ Renovate configuration presets for Power organization
 ## default
 Base configuration that inherits multiple different configurations, including `release-age(3)`.
 
-Supported third-party version and digest updates wait three days when a release timestamp is available. Updates without a timestamp proceed without that delay, so OS packages, Git sources and container registries without dates are not frozen. Renovate retains its default strict filtering for dated releases that are still too young.
+Supported third-party version and digest updates wait three days when a release timestamp is available. Updates without a timestamp proceed without that delay, so OS packages, Git sources and container registries without dates are not frozen. Renovate retains its default strict filtering for dated releases that are still too young. GitHub tag/digest dates can reflect publisher-controlled commit or tag dates, so backdating or retagging can defeat that observation window; this is not a server-verified publication-age guarantee.
 
 Usage: `"extends": ["github>powerhome/renovate-config"]`
 
 ## release-age(days)
-Shared cooldown policy and Powerhome exemptions. `default` uses three days; `pac` applies the same policy with seven days. The exemption list is maintained here once, after the cooldown rules, so changing it affects both consumers.
+Shared cooldown policy and Powerhome exemptions. `default` uses three days; `pac` applies the same policy with seven days. The exemption list is maintained here once, after the cooldown rules, so changing it affects both consumers. To choose another delay while preserving the exemptions, extend `release-age(14)` after the default. A top-level `minimumReleaseAge` value alone does not override this preset's package rule; explicit repository-specific overrides must use later `packageRules`.
 
 `digest` and `pinDigest` updates keep the delay when their datasource supplies a usable timestamp. `lockFileMaintenance`, `pin`, `replacement`, `bump`, `lockfileUpdate` and `rollback` are explicitly exempt because Renovate cannot enforce release age for them. Security updates retain Renovate's upstream behavior. This policy does not guarantee an age for transitive changes made by a package manager.
 
@@ -39,6 +39,11 @@ Usage within `packageRules`: `"extends": ["github>powerhome/renovate-config:powe
 Exempts the Powerhome Docker Hub namespace when the existing lookup registry is explicitly Docker Hub. It does not redirect a configured mirror.
 
 Usage within `packageRules`: `"extends": ["github>powerhome/renovate-config:powerhome-release-age-docker-hub"]`
+
+## powerhome-release-age-docker-hub-default
+Exempts unqualified `powerhome/<image>` and `docker.io/powerhome/<image>` image references when `registryUrls`, `defaultRegistryUrls` and `additionalRegistryUrls` are all empty or absent. Renovate then uses Docker Hub directly. Any configured alternate route keeps the normal cooldown; this rule never redirects lookups.
+
+Usage within `packageRules`: `"extends": ["github>powerhome/renovate-config:powerhome-release-age-docker-hub-default"]`
 
 ## powerhome-release-age-packages
 Exempts fully qualified Powerhome container identities on GHCR and the listed internal image namespaces. Image labels and third-party mirrors do not establish identity.

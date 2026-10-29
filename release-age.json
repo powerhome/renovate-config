@@ -52,6 +52,11 @@
     },
     {
       "extends": [
+        "powerhome/renovate-config:powerhome-release-age-docker-hub-default"
+      ]
+    },
+    {
+      "extends": [
         "powerhome/renovate-config:powerhome-release-age-packages"
       ]
     }
