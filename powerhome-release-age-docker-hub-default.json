@@ -1,0 +1,14 @@
+{
+    "description": "Exempt implicit Docker Hub Powerhome images only when no registry route is configured.",
+    "matchDatasources": [
+        "docker"
+    ],
+    "matchPackageNames": [
+        "/^powerhome\\/[a-z0-9][a-z0-9._-]*$/",
+        "/^docker\\.io\\/powerhome\\/[a-z0-9][a-z0-9._-]*$/"
+    ],
+    "matchJsonata": [
+        "$count(registryUrls[$]) = 0 and $count(defaultRegistryUrls[$]) = 0 and $count(additionalRegistryUrls[$]) = 0"
+    ],
+    "minimumReleaseAge": null
+}

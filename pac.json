@@ -9,7 +9,8 @@
     "powerhome/renovate-config",
     "powerhome/renovate-config:group-github-actions",
     "powerhome/renovate-config:group-go",
-    "schedule:weekly"
+    "schedule:weekly",
+    "powerhome/renovate-config:release-age(7)"
   ],
   "lockFileMaintenance": {
     "extends": ["schedule:monthly"]
@@ -19,11 +20,6 @@
     "vulnerabilityFixStrategy": "highest"
   },
   "packageRules": [
-    {
-      "description": "Wait 7 days after a release before proposing it. Set in a rule so it also replaces the 3 days that config:best-practices sets for npm. Security updates are not delayed.",
-      "matchUpdateTypes": ["major", "minor", "patch", "digest"],
-      "minimumReleaseAge": "7 days"
-    },
     {
       "description": "Digest-only updates (same tag, new digest, usually a rebuilt base image) only once a month. Digests are still pinned and still move with tag updates.",
       "matchUpdateTypes": ["digest"],

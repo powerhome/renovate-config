@@ -14,7 +14,8 @@
         "powerhome/renovate-config:percona-pxc-versions",
         "powerhome/renovate-config:percona-postgresql-versions",
         "powerhome/renovate-config:ignore-reviewdog-action",
-        "powerhome/renovate-config:throttle-claude-code-action"
+        "powerhome/renovate-config:throttle-claude-code-action",
+        "powerhome/renovate-config:release-age(3)"
     ],
     "rangeStrategy": "pin",
     "timezone": "America/New_York"

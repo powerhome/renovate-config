@@ -1,0 +1,24 @@
+{
+    "description": "Exempt images fetched from the Powerhome namespace on Docker Hub.",
+    "matchDatasources": [
+        "docker"
+    ],
+    "matchPackageNames": [
+        "powerhome/**",
+        "docker.io/powerhome/**",
+        "index.docker.io/powerhome/**",
+        "registry-1.docker.io/powerhome/**"
+    ],
+    "minimumReleaseAge": null,
+    "matchRegistryUrls": [
+        "https://index.docker.io",
+        "https://index.docker.io/",
+        "https://registry-1.docker.io",
+        "https://registry-1.docker.io/",
+        "https://docker.io",
+        "https://docker.io/"
+    ],
+    "matchJsonata": [
+        "$count(registryUrls) = 1"
+    ]
+}
