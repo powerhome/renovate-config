@@ -2,17 +2,50 @@
 Renovate configuration presets for Power organization
 
 ## default
-Base configuration that inherits multiple different configurations.
+Base configuration that inherits multiple different configurations, including `release-age(3)`.
 
-Every repository inheriting this preset waits three days before Renovate proposes third-party releases. Strict internal checks hold update branches and pull requests until the release age passes.
-
-Powerhome dependencies are exempt only by their actual lookup identity: Powerhome GitHub repositories, the Power npm scope and known npm package, known RubyGems.org gems, or Powerhome container namespaces. Rules are restricted to the corresponding datasource and use trusted lookup endpoints for GitHub, npm, RubyGems and unqualified Docker Hub images. Fully qualified container names identify their registry directly. A package's claimed repository URL, homepage, or image label never grants an exemption; third-party packages mirrored in internal registries are not exempt.
-
-The policy requires release timestamps, so third-party releases without usable timestamps can remain pending. Renovate security fixes and special update types such as lockfile maintenance retain their upstream behavior. Repository-specific settings can override the shared defaults. The PAC preset retains its seven-day third-party delay and references the same Powerhome exemptions after its own rules.
-
-The exemptions live in the `powerhome-release-age-*.json` rule presets. New unscoped package identities require a reviewed addition to the matching datasource allowlist; other dependencies keep the cooldown. These rules rely on registry/repository access controls, not artifact signatures, and do not detect a compromised publisher that already controls an allowed identity.
+Supported third-party version and digest updates wait three days when a release timestamp is available. Updates without a timestamp proceed without that delay, so OS packages, Git sources and container registries without dates are not frozen. Renovate retains its default strict filtering for dated releases that are still too young.
 
 Usage: `"extends": ["github>powerhome/renovate-config"]`
+
+## release-age(days)
+Shared cooldown policy and Powerhome exemptions. `default` uses three days; `pac` applies the same policy with seven days. The exemption list is maintained here once, after the cooldown rules, so changing it affects both consumers.
+
+`digest` and `pinDigest` updates keep the delay when their datasource supplies a usable timestamp. `lockFileMaintenance`, `pin`, `replacement`, `bump`, `lockfileUpdate` and `rollback` are explicitly exempt because Renovate cannot enforce release age for them. Security updates retain Renovate's upstream behavior. This policy does not guarantee an age for transitive changes made by a package manager.
+
+Usage: `"extends": ["github>powerhome/renovate-config:release-age(3)"]`
+
+## powerhome-release-age-source
+Exempts actual Powerhome repository identities on the `github-tags`, `github-releases` and `github-digest` datasources. These GitHub-native datasources construct the source URL from the repository and lookup endpoint, so the rule verifies that result belongs to github.com. This does not trust repository URLs supplied in npm, RubyGems or image metadata.
+
+Usage within `packageRules`: `"extends": ["github>powerhome/renovate-config:powerhome-release-age-source"]`
+
+## powerhome-release-age-git
+Exempts Git dependencies whose configured remote is a Powerhome GitHub repository.
+
+Usage within `packageRules`: `"extends": ["github>powerhome/renovate-config:powerhome-release-age-git"]`
+
+## powerhome-release-age-npm
+Exempts the Powerhome npm scope and known package identities only when Renovate exposes one approved lookup registry: npmjs.org or Power's npm registry. It does not rewrite registry URLs or `.npmrc` scope mappings. An unknown, implicit or mixed registry configuration keeps the normal cooldown.
+
+Usage within `packageRules`: `"extends": ["github>powerhome/renovate-config:powerhome-release-age-npm"]`
+
+## powerhome-release-age-rubygems
+Exempts known Powerhome gem identities only when the existing lookup registry is RubyGems.org. Gemfile sources are preserved; custom or ambiguous sources keep the normal cooldown.
+
+Usage within `packageRules`: `"extends": ["github>powerhome/renovate-config:powerhome-release-age-rubygems"]`
+
+## powerhome-release-age-docker-hub
+Exempts the Powerhome Docker Hub namespace when the existing lookup registry is explicitly Docker Hub. It does not redirect a configured mirror.
+
+Usage within `packageRules`: `"extends": ["github>powerhome/renovate-config:powerhome-release-age-docker-hub"]`
+
+## powerhome-release-age-packages
+Exempts fully qualified Powerhome container identities on GHCR and the listed internal image namespaces. Image labels and third-party mirrors do not establish identity.
+
+Usage within `packageRules`: `"extends": ["github>powerhome/renovate-config:powerhome-release-age-packages"]`
+
+New unscoped package identities require a reviewed allowlist change. These exemptions rely on registry and repository access controls, not signatures, and do not detect compromise of an already-authorized publisher.
 
 ## temporary-fixes
 A collection of temporary fixes, like restrictions on package versions, where these are known to be broken and affect multiple apps.

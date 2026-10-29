@@ -14,43 +14,9 @@
         "powerhome/renovate-config:percona-pxc-versions",
         "powerhome/renovate-config:percona-postgresql-versions",
         "powerhome/renovate-config:ignore-reviewdog-action",
-        "powerhome/renovate-config:throttle-claude-code-action"
+        "powerhome/renovate-config:throttle-claude-code-action",
+        "powerhome/renovate-config:release-age(3)"
     ],
     "rangeStrategy": "pin",
-    "timezone": "America/New_York",
-    "minimumReleaseAge": "3 days",
-    "minimumReleaseAgeBehaviour": "timestamp-required",
-    "internalChecksFilter": "strict",
-    "packageRules": [
-        {
-            "extends": [
-                "powerhome/renovate-config:powerhome-release-age-source"
-            ]
-        },
-        {
-            "extends": [
-                "powerhome/renovate-config:powerhome-release-age-git"
-            ]
-        },
-        {
-            "extends": [
-                "powerhome/renovate-config:powerhome-release-age-npm"
-            ]
-        },
-        {
-            "extends": [
-                "powerhome/renovate-config:powerhome-release-age-rubygems"
-            ]
-        },
-        {
-            "extends": [
-                "powerhome/renovate-config:powerhome-release-age-docker-hub"
-            ]
-        },
-        {
-            "extends": [
-                "powerhome/renovate-config:powerhome-release-age-packages"
-            ]
-        }
-    ]
+    "timezone": "America/New_York"
 }

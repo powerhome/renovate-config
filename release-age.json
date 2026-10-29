@@ -1,0 +1,59 @@
+{
+  "description": "Wait {{arg0}} days for dated third-party releases without blocking undated or unsupported updates.",
+  "minimumReleaseAge": "{{arg0}} days",
+  "minimumReleaseAgeBehaviour": "timestamp-optional",
+  "lockFileMaintenance": {
+    "minimumReleaseAge": null
+  },
+  "packageRules": [
+    {
+      "description": "Apply the shared delay after inherited datasource-specific cooldowns.",
+      "matchPackageNames": [
+        "*"
+      ],
+      "minimumReleaseAge": "{{arg0}} days"
+    },
+    {
+      "description": "Renovate cannot enforce release age for these update types.",
+      "matchUpdateTypes": [
+        "lockFileMaintenance",
+        "replacement",
+        "pin",
+        "bump",
+        "lockfileUpdate",
+        "rollback"
+      ],
+      "minimumReleaseAge": null
+    },
+    {
+      "extends": [
+        "powerhome/renovate-config:powerhome-release-age-source"
+      ]
+    },
+    {
+      "extends": [
+        "powerhome/renovate-config:powerhome-release-age-git"
+      ]
+    },
+    {
+      "extends": [
+        "powerhome/renovate-config:powerhome-release-age-npm"
+      ]
+    },
+    {
+      "extends": [
+        "powerhome/renovate-config:powerhome-release-age-rubygems"
+      ]
+    },
+    {
+      "extends": [
+        "powerhome/renovate-config:powerhome-release-age-docker-hub"
+      ]
+    },
+    {
+      "extends": [
+        "powerhome/renovate-config:powerhome-release-age-packages"
+      ]
+    }
+  ]
+}

@@ -9,8 +9,16 @@
         "index.docker.io/powerhome/**",
         "registry-1.docker.io/powerhome/**"
     ],
-    "registryUrls": [
-        "https://index.docker.io"
+    "minimumReleaseAge": null,
+    "matchRegistryUrls": [
+        "https://index.docker.io",
+        "https://index.docker.io/",
+        "https://registry-1.docker.io",
+        "https://registry-1.docker.io/",
+        "https://docker.io",
+        "https://docker.io/"
     ],
-    "minimumReleaseAge": null
+    "matchJsonata": [
+        "$count(registryUrls) = 1"
+    ]
 }

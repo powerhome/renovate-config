@@ -1,5 +1,5 @@
 {
-    "description": "Exempt the Powerhome npm scope and known package identity from the trusted Power npm registry.",
+    "description": "Exempt approved Powerhome npm identities only when their existing lookup registry is trusted.",
     "matchDatasources": [
         "npm"
     ],
@@ -7,8 +7,14 @@
         "@powerhome/**",
         "playbook-ui"
     ],
-    "registryUrls": [
-        "https://npm.powerapp.cloud"
+    "minimumReleaseAge": null,
+    "matchRegistryUrls": [
+        "https://registry.npmjs.org",
+        "https://registry.npmjs.org/",
+        "https://npm.powerapp.cloud",
+        "https://npm.powerapp.cloud/"
     ],
-    "minimumReleaseAge": null
+    "matchJsonata": [
+        "$count(registryUrls) = 1"
+    ]
 }

@@ -14,8 +14,12 @@
         "nitro_config",
         "cobra_commander"
     ],
-    "registryUrls": [
-        "https://rubygems.org"
+    "minimumReleaseAge": null,
+    "matchRegistryUrls": [
+        "https://rubygems.org",
+        "https://rubygems.org/"
     ],
-    "minimumReleaseAge": null
+    "matchJsonata": [
+        "$count(registryUrls) = 1"
+    ]
 }

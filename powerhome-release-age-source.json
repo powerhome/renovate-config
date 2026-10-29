@@ -1,14 +1,15 @@
 {
-    "description": "Exempt releases and tags fetched from actual Powerhome repositories on GitHub.",
+    "description": "Exempt Powerhome repositories only on GitHub-native datasources whose source URL comes from the actual lookup endpoint.",
     "matchDatasources": [
         "github-tags",
-        "github-releases"
+        "github-releases",
+        "github-digest"
     ],
     "matchPackageNames": [
         "/^powerhome\\/[A-Za-z0-9_][A-Za-z0-9_.-]*$/"
     ],
-    "registryUrls": [
-        "https://github.com"
-    ],
-    "minimumReleaseAge": null
+    "minimumReleaseAge": null,
+    "matchSourceUrls": [
+        "https://github.com/powerhome/**"
+    ]
 }
