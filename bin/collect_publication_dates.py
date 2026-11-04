@@ -13,7 +13,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 
-MAX_PAGES = 200
+MAX_PAGES = 1000
 MAX_BODY = 32 * 1024 * 1024
 DIGEST = re.compile(r"sha256:[a-f0-9]{64}\Z")
 
@@ -31,16 +31,20 @@ def epoch(value, divisor=1):
     return timestamp(datetime.fromtimestamp(int(value) / divisor, timezone.utc).isoformat())
 
 
-def fetch(url):
+def fetch(url, body=None):
     headers = {"Accept": "application/json", "User-Agent": "powerhome-publication-dates"}
     if url.startswith("https://api.github.com/"):
         token = os.environ.get("GH_TOKEN")
         if not token:
             raise ValueError("GH_TOKEN with read:packages access is required")
         headers.update({"Authorization": f"Bearer {token}", "X-GitHub-Api-Version": "2022-11-28"})
+    data = None
+    if body is not None:
+        headers["Content-Type"] = "application/json"
+        data = json.dumps(body).encode()
     for attempt in range(3):
         try:
-            with urlopen(Request(url, headers=headers), timeout=45) as response:
+            with urlopen(Request(url, data=data, headers=headers), timeout=45) as response:
                 body = response.read(MAX_BODY + 1)
                 if len(body) > MAX_BODY:
                     raise ValueError("registry response exceeds size limit")
@@ -71,6 +75,8 @@ def collect(package, owner_type, get=fetch):
         endpoint = f"https://api.github.com/{owner_type}/{owner}/packages/container/{quote(name, safe='')}/versions"
         seen = set()
         for page in range(1, MAX_PAGES + 1):
+            if page % 50 == 0:
+                print(f"{package}: collecting page {page}", flush=True)
             versions = get(f"{endpoint}?per_page=100&page={page}&state=active")
             if not isinstance(versions, list):
                 raise ValueError("invalid GitHub package versions response")
@@ -104,6 +110,24 @@ def collect(package, owner_type, get=fetch):
                 add_release(releases, tag, digest, epoch(manifest["timeUploadedMs"], 1000))
         if set(releases) != set(result["tags"]):
             raise ValueError("GCR tag listing and manifest map disagree")
+    elif host == "public.ecr.aws":
+        alias, name = repository.split("/", 1)
+        body = {"registryAliasName": alias, "repositoryName": name, "maxResults": 1000}
+        seen_tokens = set()
+        for _ in range(MAX_PAGES):
+            result = get("https://api.us-east-1.gallery.ecr.aws/describeImageTags", body)
+            for tag in result["imageTagDetails"]:
+                detail = tag["imageDetail"]
+                add_release(releases, tag["imageTag"], detail["imageDigest"], detail["imagePushedAt"])
+            token = result.get("nextToken")
+            if not token:
+                break
+            if not isinstance(token, str) or token in seen_tokens:
+                raise ValueError("invalid or repeated ECR pagination token")
+            seen_tokens.add(token)
+            body = {**body, "nextToken": token}
+        else:
+            raise ValueError("ECR pagination limit exceeded; snapshot is incomplete")
     else:
         raise ValueError(f"unsupported registry {host}")
     if not releases:

@@ -16,6 +16,8 @@
         "docker"
       ],
       "matchPackageNames": [
+        "gcr.io/distroless/static",
+        "gcr.io/distroless/static-debian12",
         "ghcr.io/ahrtr/etcd-defrag",
         "ghcr.io/astral-sh/uv",
         "ghcr.io/berriai/litellm",
@@ -29,8 +31,7 @@
         "ghcr.io/langfuse/langfuse-k8s/charts/langfuse",
         "ghcr.io/mneverov/cluster-cidr-controller",
         "ghcr.io/rancher/local-path-provisioner/charts/local-path-provisioner",
-        "gcr.io/distroless/static",
-        "gcr.io/distroless/static-debian12",
+        "public.ecr.aws/aws-cli/aws-cli",
         "quay.io/podman/stable"
       ],
       "overrideDatasource": "custom.nip-publication",

@@ -61,6 +61,28 @@ class CollectorTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             collector.add_release(releases, "v1", DIGEST, DATE)
 
+    def test_ecr_paginates_and_uses_digest_push_time(self):
+        calls = []
+
+        def get(url, body):
+            calls.append((url, body))
+            page = 2 if "nextToken" in body else 1
+            return {"imageTagDetails": [{"imageTag": f"v{page}",
+                    "createdAt": "2025-01-02T00:00:00Z",
+                    "imageDetail": {"imageDigest": DIGEST, "imagePushedAt": DATE}}],
+                    **({"nextToken": "next-page"} if page == 1 else {})}
+
+        result = collector.collect("public.ecr.aws/aws-cli/aws-cli", None, get)
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]["releaseTimestamp"], DATE)
+        self.assertEqual(calls[1][1]["nextToken"], "next-page")
+        self.assertEqual(calls[0][1]["registryAliasName"], "aws-cli")
+
+    def test_repeated_ecr_token_fails_closed(self):
+        with self.assertRaises(ValueError):
+            collector.collect("public.ecr.aws/aws-cli/aws-cli", None,
+                              lambda url, body: {"imageTagDetails": [], "nextToken": "same"})
+
     def test_incomplete_gcr_map_fails_closed(self):
         with self.assertRaises(ValueError):
             collector.collect("gcr.io/distroless/static", None, lambda _: {

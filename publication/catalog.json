@@ -1,4 +1,6 @@
 {
+  "gcr.io/distroless/static": null,
+  "gcr.io/distroless/static-debian12": null,
   "ghcr.io/ahrtr/etcd-defrag": "users",
   "ghcr.io/astral-sh/uv": "orgs",
   "ghcr.io/berriai/litellm": "orgs",
@@ -12,7 +14,6 @@
   "ghcr.io/langfuse/langfuse-k8s/charts/langfuse": "orgs",
   "ghcr.io/mneverov/cluster-cidr-controller": "users",
   "ghcr.io/rancher/local-path-provisioner/charts/local-path-provisioner": "orgs",
-  "gcr.io/distroless/static": null,
-  "gcr.io/distroless/static-debian12": null,
+  "public.ecr.aws/aws-cli/aws-cli": null,
   "quay.io/podman/stable": null
 }
