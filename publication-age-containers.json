@@ -1,0 +1,57 @@
+{
+  "description": "Use complete, fresh registry snapshots to age exact third-party container digests.",
+  "customDatasources": {
+    "nip-publication": {
+      "defaultRegistryUrlTemplate": "https://raw.githubusercontent.com/powerhome/renovate-config/publication-data/data/{{packageName}}.json",
+      "format": "json",
+      "transformTemplates": [
+        "($age := $toMillis($now()) - $toMillis(collectedAt); schemaVersion = 1 and packageName = \"{{packageName}}\" and $age >= 0 and $age <= 21600000 ? {\"releases\": releases} : $error(\"Missing, stale, or mismatched container publication snapshot\"))"
+      ]
+    }
+  },
+  "packageRules": [
+    {
+      "description": "Keep registry names and digest pinning; require fresh registry publication evidence.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/ahrtr/etcd-defrag",
+        "ghcr.io/astral-sh/uv",
+        "ghcr.io/berriai/litellm",
+        "ghcr.io/berriai/litellm-helm",
+        "ghcr.io/clickhouse/clickhouse-cluster-helm",
+        "ghcr.io/clickhouse/clickhouse-operator",
+        "ghcr.io/clickhouse/clickhouse-operator-helm",
+        "ghcr.io/deliveryhero/helm-charts/node-problem-detector",
+        "ghcr.io/donadiosolutions/gpubox",
+        "ghcr.io/grafana/helm-charts/grafana-operator",
+        "ghcr.io/langfuse/langfuse-k8s/charts/langfuse",
+        "ghcr.io/mneverov/cluster-cidr-controller",
+        "ghcr.io/rancher/local-path-provisioner/charts/local-path-provisioner",
+        "gcr.io/distroless/static",
+        "gcr.io/distroless/static-debian12",
+        "quay.io/podman/stable"
+      ],
+      "overrideDatasource": "custom.nip-publication",
+      "registryUrls": [],
+      "versioning": "docker",
+      "minimumReleaseAgeBehaviour": "timestamp-required",
+      "matchJsonata": [
+        "($registry := \"https://\" & $substringBefore(packageName, \"/\"); ($not($exists(registryUrls)) or registryUrls = null or $count(registryUrls) = 0 or ($count(registryUrls) = 1 and (registryUrls[0] = $registry or registryUrls[0] = $registry & \"/\"))) and ($not($exists(defaultRegistryUrls)) or defaultRegistryUrls = null or $count(defaultRegistryUrls) = 0) and ($not($exists(additionalRegistryUrls)) or additionalRegistryUrls = null or $count(additionalRegistryUrls) = 0))"
+      ]
+    },
+    {
+      "description": "Resolve the moving nonroot alias as a version so its exact digest timestamp gates updates.",
+      "matchDatasources": [
+        "custom.nip-publication"
+      ],
+      "matchPackageNames": [
+        "gcr.io/distroless/static",
+        "gcr.io/distroless/static-debian12"
+      ],
+      "matchCurrentValue": "/^nonroot$/",
+      "versioning": "regex:^(?<major>0)?nonroot$"
+    }
+  ]
+}

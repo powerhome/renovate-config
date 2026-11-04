@@ -15,6 +15,12 @@ Shared cooldown policy and Powerhome exemptions. `default` uses three days; `pac
 
 Usage: `"extends": ["github>powerhome/renovate-config:release-age(3)"]`
 
+## publication-age-containers and publication-age-actions
+
+Optional stronger publication evidence for the NIP dependency inventory. Extend these at a reviewed commit after `default` or `pac`; they retain the configured delay and schedules. The container preset reads fresh, complete registry snapshots with exact digests. Its collector workflow must successfully publish the `publication-data` branch before consumers enable it. The Actions preset uses native GitHub Releases for third-party Actions pinned to full semantic versions; floating aliases retain their existing behavior.
+
+See [publication evidence](publication/README.md) for the catalog, publication fields, credential and rollout requirements, validation commands and remaining limitations. Neither preset is enabled globally by `default`.
+
 ## powerhome-release-age-source
 Exempts actual Powerhome repository identities on the `github-tags`, `github-releases` and `github-digest` datasources. These GitHub-native datasources construct the source URL from the repository and lookup endpoint, so the rule verifies that result belongs to github.com. This does not trust repository URLs supplied in npm, RubyGems or image metadata.
 

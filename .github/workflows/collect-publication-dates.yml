@@ -1,0 +1,47 @@
+name: Collect container publication dates
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */3 * * *'
+  push:
+    branches: [main]
+    paths:
+      - bin/collect_publication_dates.py
+      - publication/catalog.json
+      - .github/workflows/collect-publication-dates.yml
+
+permissions:
+  contents: write
+  packages: read
+
+concurrency:
+  group: container-publication-dates
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Collect complete registry snapshots
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 bin/collect_publication_dates.py --output "$RUNNER_TEMP/publication-feed"
+      - name: Publish snapshot branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git ls-remote --exit-code --heads origin publication-data > /dev/null; then
+            git fetch --depth=1 origin publication-data
+            git switch --create publication-data FETCH_HEAD
+          else
+            git switch --orphan publication-data
+          fi
+          cp -R "$RUNNER_TEMP/publication-feed/data" .
+          git add data
+          if ! git diff --cached --quiet; then
+            git commit --signoff -m 'Refresh container publication dates' -m 'Record complete registry snapshots for the publication-age datasource.'
+            git push origin HEAD:publication-data
+          fi
