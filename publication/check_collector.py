@@ -30,7 +30,9 @@ class CollectorTest(unittest.TestCase):
 
         result = collector.collect("ghcr.io/owner/nested/image", "orgs", get)
         self.assertEqual(len(result), 101)
-        self.assertEqual(len(calls), 2)
+        self.assertGreaterEqual(len(calls), 2)
+        self.assertLessEqual(len(calls), collector.PAGE_WORKERS)
+        self.assertTrue(any("page=2&" in url for url in calls))
         self.assertIn("nested%2Fimage", calls[0])
         self.assertEqual(result[0]["releaseTimestamp"], DATE)
         self.assertEqual(result[0]["digest"], DIGEST)

@@ -2,6 +2,7 @@
 """Collect exact registry digest publication times using only the standard library."""
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import json
 import os
@@ -14,6 +15,7 @@ from urllib.request import Request, urlopen
 
 
 MAX_PAGES = 1000
+PAGE_WORKERS = 4
 MAX_BODY = 32 * 1024 * 1024
 DIGEST = re.compile(r"sha256:[a-f0-9]{64}\Z")
 
@@ -74,21 +76,29 @@ def collect(package, owner_type, get=fetch):
             raise ValueError("GitHub owner type must be declared")
         endpoint = f"https://api.github.com/{owner_type}/{owner}/packages/container/{quote(name, safe='')}/versions"
         seen = set()
-        for page in range(1, MAX_PAGES + 1):
-            if page % 50 == 0:
-                print(f"{package}: collecting page {page}", flush=True)
-            versions = get(f"{endpoint}?per_page=100&page={page}&state=active")
-            if not isinstance(versions, list):
-                raise ValueError("invalid GitHub package versions response")
-            for version in versions:
-                if version["id"] in seen:
-                    raise ValueError("GitHub versions changed during pagination")
-                seen.add(version["id"])
-                for tag in version["metadata"]["container"]["tags"]:
-                    add_release(releases, tag, version["name"], version["created_at"])
-            if len(versions) < 100:
-                break
-        else:
+        complete = False
+        with ThreadPoolExecutor(max_workers=PAGE_WORKERS) as workers:
+            for first_page in range(1, MAX_PAGES + 1, PAGE_WORKERS):
+                pages = range(first_page, min(first_page + PAGE_WORKERS, MAX_PAGES + 1))
+                urls = [f"{endpoint}?per_page=100&page={page}&state=active" for page in pages]
+                # Submit only one fixed batch; process responses in page order.
+                for page, versions in zip(pages, workers.map(get, urls)):
+                    if page % 50 == 0:
+                        print(f"{package}: collecting page {page}", flush=True)
+                    if not isinstance(versions, list):
+                        raise ValueError("invalid GitHub package versions response")
+                    for version in versions:
+                        if version["id"] in seen:
+                            raise ValueError("GitHub versions changed during pagination")
+                        seen.add(version["id"])
+                        for tag in version["metadata"]["container"]["tags"]:
+                            add_release(releases, tag, version["name"], version["created_at"])
+                    if len(versions) < 100:
+                        complete = True
+                        break
+                if complete:
+                    break
+        if not complete:
             raise ValueError("GitHub pagination limit exceeded; snapshot is incomplete")
     elif host == "quay.io":
         for page in range(1, MAX_PAGES + 1):
