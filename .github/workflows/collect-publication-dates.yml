@@ -9,6 +9,8 @@ on:
     paths:
       - bin/collect_publication_dates.py
       - publication/catalog.json
+      - publication-age-containers.json
+      - bin/generate_publication_preset.py
       - .github/workflows/collect-publication-dates.yml
 
 permissions:
@@ -25,6 +27,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Check generated publication allowlist
+        run: python3 bin/generate_publication_preset.py --check
       - name: Collect complete registry snapshots
         env:
           GH_TOKEN: ${{ github.token }}

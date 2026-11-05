@@ -1,0 +1,27 @@
+name: Check publication catalog
+
+on:
+  pull_request:
+    paths:
+      - publication/catalog.json
+      - publication-age-containers.json
+      - bin/generate_publication_preset.py
+      - .github/workflows/check-publication-catalog.yml
+  push:
+    branches: [main]
+    paths:
+      - publication/catalog.json
+      - publication-age-containers.json
+      - bin/generate_publication_preset.py
+      - .github/workflows/check-publication-catalog.yml
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - run: python3 bin/generate_publication_preset.py --check

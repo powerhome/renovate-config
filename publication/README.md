@@ -6,6 +6,8 @@ These presets are opt-in. They complement `release-age(days)` and do not change 
 
 Extend `github>powerhome/renovate-config:publication-age-containers` at a reviewed commit after the normal shared preset. Only the exact third-party package identities in `catalog.json` are mapped. Explicit alternate registries, fallback registries and mirrors keep their existing datasource. The preset does not map Powerhome images, Docker Hub images or arbitrary registries.
 
+`publication/catalog.json` is the single maintained package inventory. After changing it, run `python3 bin/generate_publication_preset.py` and commit the updated `publication-age-containers.json` with the catalog. The script generates only the package allowlist of the rule that selects `custom.nip-publication`; it preserves the datasource, registry guards and special alias rules. Do not edit that allowlist manually. `python3 bin/generate_publication_preset.py --check` verifies synchronization, and the `Check publication catalog` workflow enforces it on pull requests. The generated preset stays committed so consumers can resolve it before a collector run.
+
 The collector reads every page of GitHub Packages container versions and Quay active tags, the complete GCR manifest map and the ECR Public gallery. It pairs each active tag with the exact manifest digest and the registry's publication evidence:
 
 | Registry | Publication field | Identity |
