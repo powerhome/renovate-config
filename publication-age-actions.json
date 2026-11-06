@@ -6,7 +6,7 @@
       "matchManagers": ["github-actions"],
       "matchDatasources": ["github-tags"],
       "matchPackageNames": ["!/^powerhome\\//"],
-      "matchCurrentValue": "/^v?\\d+\\.\\d+\\.\\d+(?:[-+][0-9A-Za-z.-]+)?$/",
+      "matchCurrentValue": "/^v?\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$/",
       "overrideDatasource": "github-releases",
       "minimumReleaseAgeBehaviour": "timestamp-required"
     }

@@ -46,9 +46,14 @@ async function cfg(value,extra={}) {
  return applyPackageRules({...getConfig(),...dep,manager:'github-actions',packageFile:'.github/workflows/test.yml',packageName:'fixture/'+value+'/'+JSON.stringify(extra),minimumReleaseAge:'3 days',minimumReleaseAgeBehaviour:'timestamp-optional',internalChecksFilter:'strict',rangeStrategy:'pin',pinDigests:true,packageRules:preset.packageRules,...extra},'test');
 }
 const results=[];
-for(const value of ['v1.0.0','1.0.0','v1.2.3-beta.1','v1.2.3+build.4']) {
+for(const value of ['v1.0.0','1.0.0','v1.2.3-beta.1','v1.2.3+build.4','v1.2.3-rc.1+build.7']) {
  const c=await cfg(value); assert.equal(c.datasource,'github-releases'); assert.equal(c.versioning,'github-actions'); results.push({case:'exact-version match',value});
 }
+// This manager strips build metadata from extracted comments. Exercise the
+// complete value explicitly too, so extraction cannot hide a matching defect.
+const metadataValue = 'v1.2.3-rc.1+build.7';
+assert.equal((await cfg(metadataValue, {currentValue:metadataValue})).datasource, 'github-releases');
+results.push({case:'complete prerelease plus build metadata matches',value:metadataValue});
 for(const value of ['v1','v1.2']) { const c=await cfg(value); assert.equal(c.datasource,'github-tags'); results.push({case:'floating alias unchanged',value}); }
 const firstParty=await cfg('v1.0.0',{packageName:'powerhome/example',depName:'powerhome/example'}); assert.equal(firstParty.datasource,'github-tags');
 results.push({case:'first-party unchanged'});

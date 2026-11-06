@@ -5,13 +5,14 @@
       "defaultRegistryUrlTemplate": "https://raw.githubusercontent.com/powerhome/renovate-config/publication-data/data/{{packageName}}.json",
       "format": "json",
       "transformTemplates": [
-        "($age := $toMillis($now()) - $toMillis(collectedAt); schemaVersion = 1 and packageName = \"{{packageName}}\" and $age >= 0 and $age <= 21600000 ? {\"releases\": releases} : $error(\"Missing, stale, or mismatched container publication snapshot\"))"
+        "($age := $toMillis($now()) - $toMillis(collectedAt); schemaVersion = 1 and packageName = \"{{packageName}}\" and $age >= 0 and $age <= 21600000 ? {\"releases\": releases} : $error(\"Missing, stale, or mismatched container publication snapshot\"))",
+        "($key := function($v) { ($parts := $split($replace($v, /^v/, \"\"), \"-\"); $match := $match($parts[0], /^(\\d+(?:\\.\\d+)*)(\\w*)$/); $exists($match) ? $string([$map($split($match.groups[0], \".\"), function($part) { $number($part) }), $match.groups[1], $join($parts[[1..$count($parts)]], \"-\")]) : $v) }; $groups := releases{$key(version): $}; {\"releases\": [$map(releases, function($row) { ($rows := $append([], $lookup($groups, $key($row.version))); $timestamp := $count($rows.releaseTimestamp) = $count($rows) ? $fromMillis($max($map($rows.releaseTimestamp, function($timestamp) { $toMillis($timestamp) }))); $merge([$sift($row, function($value, $name) { $name != \"releaseTimestamp\" }), {\"releaseTimestamp\": $timestamp}])) })]})"
       ]
     }
   },
   "packageRules": [
     {
-      "description": "Keep registry names and digest pinning; require fresh registry publication evidence.",
+      "description": "Keep registry names and digest pinning for Docker versions and the supported nonroot alias; require fresh publication evidence.",
       "matchDatasources": [
         "docker"
       ],
@@ -39,8 +40,9 @@
       "versioning": "docker",
       "minimumReleaseAgeBehaviour": "timestamp-required",
       "matchJsonata": [
-        "($registry := \"https://\" & $substringBefore(packageName, \"/\"); ($not($exists(registryUrls)) or registryUrls = null or $count(registryUrls) = 0 or ($count(registryUrls) = 1 and (registryUrls[0] = $registry or registryUrls[0] = $registry & \"/\"))) and ($not($exists(defaultRegistryUrls)) or defaultRegistryUrls = null or $count(defaultRegistryUrls) = 0) and ($not($exists(additionalRegistryUrls)) or additionalRegistryUrls = null or $count(additionalRegistryUrls) = 0))"
-      ]
+        "(currentValue != \"nonroot\" or packageName in [\"gcr.io/distroless/static\", \"gcr.io/distroless/static-debian12\"]) and ($not($contains(currentValue, /^[a-f0-9]{7,40}$/)) or $contains(currentValue, /^[0-9]+$/)) and ($registry := \"https://\" & $substringBefore(packageName, \"/\"); ($not($exists(registryUrls)) or registryUrls = null or $count(registryUrls) = 0 or ($count(registryUrls) = 1 and (registryUrls[0] = $registry or registryUrls[0] = $registry & \"/\"))) and ($not($exists(defaultRegistryUrls)) or defaultRegistryUrls = null or $count(defaultRegistryUrls) = 0) and ($not($exists(additionalRegistryUrls)) or additionalRegistryUrls = null or $count(additionalRegistryUrls) = 0))"
+      ],
+      "matchCurrentValue": "/^(?:v?\\d+(?:\\.\\d+)*\\w*(?:-.*)?|nonroot)$/"
     },
     {
       "description": "Resolve the moving nonroot alias as a version so its exact digest timestamp gates updates.",

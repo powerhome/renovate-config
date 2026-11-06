@@ -14,7 +14,7 @@ on:
       - .github/workflows/collect-publication-dates.yml
 
 permissions:
-  contents: write
+  contents: read
   packages: read
 
 concurrency:
@@ -23,18 +23,35 @@ concurrency:
 
 jobs:
   collect:
+    if: github.ref == 'refs/heads/main'
+    environment: publication-data
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
       - name: Check generated publication allowlist
         run: python3 bin/generate_publication_preset.py --check
       - name: Collect complete registry snapshots
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.PUBLICATION_READ_TOKEN || github.token }}
         run: python3 bin/collect_publication_dates.py --output "$RUNNER_TEMP/publication-feed"
+      - name: Create restricted publisher token
+        id: publisher
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.PUBLICATION_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PUBLICATION_APP_PRIVATE_KEY }}
+          permission-contents: write
       - name: Publish snapshot branch
+        env:
+          PUBLISH_TOKEN: ${{ steps.publisher.outputs.token }}
         run: |
+          # Configure the short-lived token in this step's process environment.
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$PUBLISH_TOKEN" | base64 -w0)"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           if git ls-remote --exit-code --heads origin publication-data > /dev/null; then
@@ -43,6 +60,7 @@ jobs:
           else
             git switch --orphan publication-data
           fi
+          git rm -r --ignore-unmatch --quiet data
           cp -R "$RUNNER_TEMP/publication-feed/data" .
           git add data
           if ! git diff --cached --quiet; then

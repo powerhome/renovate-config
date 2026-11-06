@@ -4,20 +4,31 @@
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 import json
 import os
 from pathlib import Path
 import re
 import time
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 
 MAX_PAGES = 1000
 PAGE_WORKERS = 4
 MAX_BODY = 32 * 1024 * 1024
+MAX_RETRY_WAIT = 60
 DIGEST = re.compile(r"sha256:[a-f0-9]{64}\Z")
+
+
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        # Registry endpoints are fixed; never forward credentials to a redirect.
+        return None
+
+
+urlopen = build_opener(NoRedirect()).open
 
 
 def timestamp(value):
@@ -52,9 +63,33 @@ def fetch(url, body=None):
                     raise ValueError("registry response exceeds size limit")
                 return json.loads(body)
         except HTTPError as error:
-            if error.code not in (429, 500, 502, 503, 504) or attempt == 2:
+            error.close()
+            limited = error.headers.get("X-RateLimit-Remaining") == "0"
+            retry_after = error.headers.get("Retry-After")
+            retryable = error.code in (429, 500, 502, 503, 504) or (
+                error.code == 403 and (limited or retry_after is not None)
+            )
+            if not retryable or attempt == 2:
                 raise
-        time.sleep(2 ** attempt)
+            delay = 2 ** attempt
+            try:
+                if retry_after is not None:
+                    if retry_after.isdecimal():
+                        delay = max(delay, int(retry_after))
+                    else:
+                        delay = max(delay, parsedate_to_datetime(retry_after).timestamp() - time.time())
+                if limited:
+                    delay = max(delay, int(error.headers["X-RateLimit-Reset"]) - time.time())
+            except (TypeError, ValueError, OverflowError):
+                raise error
+            # Fail this collection rather than ignoring a long server cooldown.
+            if delay > MAX_RETRY_WAIT:
+                raise
+        except (URLError, TimeoutError):
+            if attempt == 2:
+                raise
+            delay = 2 ** attempt
+        time.sleep(delay)
     raise RuntimeError("registry request failed")
 
 
@@ -74,7 +109,11 @@ def collect(package, owner_type, get=fetch):
         owner, name = repository.split("/", 1)
         if owner_type not in ("orgs", "users"):
             raise ValueError("GitHub owner type must be declared")
-        endpoint = f"https://api.github.com/{owner_type}/{owner}/packages/container/{quote(name, safe='')}/versions"
+        package_endpoint = f"https://api.github.com/{owner_type}/{owner}/packages/container/{quote(name, safe='')}"
+        endpoint = f"{package_endpoint}/versions"
+        expected_count = get(package_endpoint).get("version_count")
+        if type(expected_count) is not int or expected_count < 0:
+            raise ValueError("invalid GitHub package version count")
         seen = set()
         complete = False
         with ThreadPoolExecutor(max_workers=PAGE_WORKERS) as workers:
@@ -100,6 +139,12 @@ def collect(package, owner_type, get=fetch):
                     break
         if not complete:
             raise ValueError("GitHub pagination limit exceeded; snapshot is incomplete")
+        # Offset pagination can skip an unseen ID when an earlier page shrinks.
+        # Include untagged versions in the count, and reject changed/incomplete
+        # listings before publishing any snapshots.
+        final_count = get(package_endpoint).get("version_count")
+        if type(final_count) is not int or expected_count != final_count or len(seen) != final_count:
+            raise ValueError("GitHub versions changed during pagination; snapshot is incomplete")
     elif host == "quay.io":
         for page in range(1, MAX_PAGES + 1):
             result = get(f"https://quay.io/api/v1/repository/{repository}/tag/?onlyActiveTags=true&limit=100&page={page}")
