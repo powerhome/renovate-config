@@ -17,7 +17,7 @@ Usage: `"extends": ["github>powerhome/renovate-config:release-age(3)"]`
 
 ## publication-age-containers and publication-age-actions
 
-Optional stronger publication evidence for the NIP dependency inventory. Extend these at a reviewed commit after `default` or `pac`; they retain the configured delay and schedules. The container preset reads fresh, complete registry snapshots with exact digests. Its collector workflow must successfully publish the `publication-data` branch before consumers enable it. The Actions preset uses native GitHub Releases for third-party Actions pinned to full semantic versions; floating aliases retain their existing behavior.
+Optional stronger publication evidence for the NIP dependency inventory. Extend these after `default` or `pac`; they retain the configured delay and schedules. The container preset reads fresh, complete registry snapshots with exact digests. Its collector workflow must successfully publish the `publication-data` branch before consumers enable it. The Actions preset uses native GitHub Releases for third-party Actions pinned to full semantic versions; floating aliases retain their existing behavior.
 
 See [publication evidence](publication/README.md) for the catalog, publication fields, credential and rollout requirements, validation commands and remaining limitations. Neither preset is enabled globally by `default`.
 
