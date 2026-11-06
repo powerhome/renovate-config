@@ -2,7 +2,7 @@
   "description": "Use complete, fresh registry snapshots to age exact third-party container digests.",
   "customDatasources": {
     "nip-publication": {
-      "defaultRegistryUrlTemplate": "https://raw.githubusercontent.com/powerhome/renovate-config/publication-data/data/{{packageName}}.json",
+      "defaultRegistryUrlTemplate": "https://raw.githubusercontent.com/powerhome/renovate-config/refs/heads/publication-data/data/{{packageName}}.json",
       "format": "json",
       "transformTemplates": [
         "($age := $toMillis($now()) - $toMillis(collectedAt); schemaVersion = 1 and packageName = \"{{packageName}}\" and $age >= 0 and $age <= 21600000 ? {\"releases\": releases} : $error(\"Missing, stale, or mismatched container publication snapshot\"))",

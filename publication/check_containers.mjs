@@ -16,7 +16,11 @@ const {api: dockerVersioning} = await load('modules/versioning/docker/index.js')
 GlobalConfig.set({localDir:'/tmp',cacheDir:'/tmp/nip-publication-check-cache'});
 const preset = JSON.parse(readFileSync(new URL('../publication-age-containers.json', import.meta.url)));
 let snapshot;
-getDatasourceFor('custom.nip-publication').http.getJsonUnchecked = async () => ({body:snapshot});
+const snapshotUrls = [];
+getDatasourceFor('custom.nip-publication').http.getJsonUnchecked = async url => {
+  snapshotUrls.push(url);
+  return {body:snapshot};
+};
 const digest = c => `sha256:${c.repeat(64)}`;
 const old = '2025-01-01T00:00:00Z';
 const normalize = getExpression(preset.customDatasources['nip-publication'].transformTemplates[1]);
@@ -67,6 +71,7 @@ const releases = [
  {version:'0.9.3', digest:digest('c'), releaseTimestamp:old},
 ];
 const stable = await lookup(cfg, releases);
+assert.equal(snapshotUrls.at(-1), 'https://raw.githubusercontent.com/powerhome/renovate-config/refs/heads/publication-data/data/ghcr.io/astral-sh/uv.json');
 assert.ok(stable.updates.some(u => u.newValue === '0.9.3' && u.newDigest === digest('c') && !u.pendingChecks));
 assert.ok(stable.updates.some(u => u.updateType === 'digest' && u.newDigest === digest('b') && !u.pendingChecks));
 const young = await lookup(cfg, releases.map(r => ({...r,releaseTimestamp:new Date().toISOString()})));
