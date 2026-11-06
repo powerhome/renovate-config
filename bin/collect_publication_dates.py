@@ -1,0 +1,223 @@
+#!/usr/bin/env python3
+"""Collect exact registry digest publication times using only the standard library."""
+
+import argparse
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+import http.client
+import json
+import os
+from pathlib import Path
+import re
+import time
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote
+from urllib.request import HTTPRedirectHandler, Request, build_opener
+
+
+MAX_PAGES = 1000
+PAGE_WORKERS = 4
+MAX_BODY = 32 * 1024 * 1024
+MAX_RETRY_WAIT = 60
+DIGEST = re.compile(r"sha256:[a-f0-9]{64}\Z")
+
+
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        # Registry endpoints are fixed; never forward credentials to a redirect.
+        return None
+
+
+urlopen = build_opener(NoRedirect()).open
+
+
+def timestamp(value):
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None or parsed.year < 2000:
+        raise ValueError("invalid publication timestamp")
+    if parsed.timestamp() > time.time() + 300:
+        raise ValueError("publication timestamp is in the future")
+    return parsed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def epoch(value, divisor=1):
+    return timestamp(datetime.fromtimestamp(int(value) / divisor, timezone.utc).isoformat())
+
+
+def fetch(url, body=None):
+    headers = {"Accept": "application/json", "User-Agent": "powerhome-publication-dates"}
+    if url.startswith("https://api.github.com/"):
+        token = os.environ.get("GH_TOKEN")
+        if not token:
+            raise ValueError("GH_TOKEN with read:packages access is required")
+        headers.update({"Authorization": f"Bearer {token}", "X-GitHub-Api-Version": "2022-11-28"})
+    data = None
+    if body is not None:
+        headers["Content-Type"] = "application/json"
+        data = json.dumps(body).encode()
+    for attempt in range(3):
+        try:
+            with urlopen(Request(url, data=data, headers=headers), timeout=45) as response:
+                body = response.read(MAX_BODY + 1)
+                if len(body) > MAX_BODY:
+                    raise ValueError("registry response exceeds size limit")
+                # read(n) returns a short body without raising; retry it as a
+                # network failure. The size check above runs first so oversized
+                # responses still fail without a retry.
+                if getattr(response, "length", None):
+                    raise http.client.IncompleteRead(body, response.length)
+                return json.loads(body)
+        except HTTPError as error:
+            error.close()
+            limited = error.headers.get("X-RateLimit-Remaining") == "0"
+            retry_after = error.headers.get("Retry-After")
+            retryable = error.code in (429, 500, 502, 503, 504) or (
+                error.code == 403 and (limited or retry_after is not None)
+            )
+            if not retryable or attempt == 2:
+                raise
+            delay = 2 ** attempt
+            try:
+                if retry_after is not None:
+                    if retry_after.isdecimal():
+                        delay = max(delay, int(retry_after))
+                    else:
+                        delay = max(delay, parsedate_to_datetime(retry_after).timestamp() - time.time())
+                if limited:
+                    delay = max(delay, int(error.headers["X-RateLimit-Reset"]) - time.time())
+            except (TypeError, ValueError, OverflowError):
+                raise error
+            # Fail this collection rather than ignoring a long server cooldown.
+            if delay > MAX_RETRY_WAIT:
+                raise
+        except (URLError, TimeoutError, ConnectionError, http.client.HTTPException):
+            if attempt == 2:
+                raise
+            delay = 2 ** attempt
+        time.sleep(delay)
+    raise RuntimeError("registry request failed")
+
+
+def add_release(releases, version, digest, date):
+    if not isinstance(version, str) or not version or not DIGEST.fullmatch(digest):
+        raise ValueError("invalid registry tag or digest")
+    value = {"version": version, "digest": digest, "releaseTimestamp": timestamp(date)}
+    if version in releases:
+        raise ValueError(f"duplicate active tag {version}; registry changed during pagination")
+    releases[version] = value
+
+
+def collect(package, owner_type, get=fetch):
+    releases = {}
+    host, repository = package.split("/", 1)
+    if host == "ghcr.io":
+        owner, name = repository.split("/", 1)
+        if owner_type not in ("orgs", "users"):
+            raise ValueError("GitHub owner type must be declared")
+        package_endpoint = f"https://api.github.com/{owner_type}/{owner}/packages/container/{quote(name, safe='')}"
+        endpoint = f"{package_endpoint}/versions"
+        expected_count = get(package_endpoint).get("version_count")
+        if type(expected_count) is not int or expected_count < 0:
+            raise ValueError("invalid GitHub package version count")
+        seen = set()
+        complete = False
+        with ThreadPoolExecutor(max_workers=PAGE_WORKERS) as workers:
+            for first_page in range(1, MAX_PAGES + 1, PAGE_WORKERS):
+                pages = range(first_page, min(first_page + PAGE_WORKERS, MAX_PAGES + 1))
+                urls = [f"{endpoint}?per_page=100&page={page}&state=active" for page in pages]
+                # Submit only one fixed batch; process responses in page order.
+                for page, versions in zip(pages, workers.map(get, urls)):
+                    if page % 50 == 0:
+                        print(f"{package}: collecting page {page}", flush=True)
+                    if not isinstance(versions, list):
+                        raise ValueError("invalid GitHub package versions response")
+                    for version in versions:
+                        if version["id"] in seen:
+                            raise ValueError("GitHub versions changed during pagination")
+                        seen.add(version["id"])
+                        for tag in version["metadata"]["container"]["tags"]:
+                            add_release(releases, tag, version["name"], version["created_at"])
+                    if len(versions) < 100:
+                        complete = True
+                        break
+                if complete:
+                    break
+        if not complete:
+            raise ValueError("GitHub pagination limit exceeded; snapshot is incomplete")
+        # Offset pagination can skip an unseen ID when an earlier page shrinks.
+        # Include untagged versions in the count, and reject changed/incomplete
+        # listings before publishing any snapshots.
+        final_count = get(package_endpoint).get("version_count")
+        if type(final_count) is not int or expected_count != final_count or len(seen) != final_count:
+            raise ValueError("GitHub versions changed during pagination; snapshot is incomplete")
+    elif host == "quay.io":
+        for page in range(1, MAX_PAGES + 1):
+            result = get(f"https://quay.io/api/v1/repository/{repository}/tag/?onlyActiveTags=true&limit=100&page={page}")
+            if result.get("page") != page or not isinstance(result.get("has_additional"), bool):
+                raise ValueError("invalid Quay pagination response")
+            for tag in result["tags"]:
+                add_release(releases, tag["name"], tag["manifest_digest"], epoch(tag["start_ts"]))
+            if not result["has_additional"]:
+                break
+        else:
+            raise ValueError("Quay pagination limit exceeded; snapshot is incomplete")
+    elif host == "gcr.io":
+        result = get(f"https://gcr.io/v2/{repository}/tags/list")
+        if result["name"] != repository:
+            raise ValueError("GCR repository identity mismatch")
+        for digest, manifest in result["manifest"].items():
+            for tag in manifest.get("tag", []):
+                add_release(releases, tag, digest, epoch(manifest["timeUploadedMs"], 1000))
+        if set(releases) != set(result["tags"]):
+            raise ValueError("GCR tag listing and manifest map disagree")
+    elif host == "public.ecr.aws":
+        alias, name = repository.split("/", 1)
+        body = {"registryAliasName": alias, "repositoryName": name, "maxResults": 1000}
+        seen_tokens = set()
+        for _ in range(MAX_PAGES):
+            result = get("https://api.us-east-1.gallery.ecr.aws/describeImageTags", body)
+            for tag in result["imageTagDetails"]:
+                detail = tag["imageDetail"]
+                add_release(releases, tag["imageTag"], detail["imageDigest"], detail["imagePushedAt"])
+            token = result.get("nextToken")
+            if not token:
+                break
+            if not isinstance(token, str) or token in seen_tokens:
+                raise ValueError("invalid or repeated ECR pagination token")
+            seen_tokens.add(token)
+            body = {**body, "nextToken": token}
+        else:
+            raise ValueError("ECR pagination limit exceeded; snapshot is incomplete")
+    else:
+        raise ValueError(f"unsupported registry {host}")
+    if not releases:
+        raise ValueError(f"no active releases found for {package}")
+    return [releases[tag] for tag in sorted(releases)]
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--catalog", type=Path, default=Path("publication/catalog.json"))
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    catalog = json.loads(args.catalog.read_text())
+    snapshots = {}
+    for package, owner_type in catalog.items():
+        print(f"Collecting {package}", flush=True)
+        releases = collect(package, owner_type)
+        snapshots[package] = {
+            "schemaVersion": 1,
+            "packageName": package,
+            "collectedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "releases": releases,
+        }
+    # Do not write a partial snapshot if any registry failed or exceeded a bound.
+    for package, snapshot in snapshots.items():
+        destination = args.output / "data" / f"{package}.json"
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(json.dumps(snapshot, separators=(",", ":")) + "\n")
+
+
+if __name__ == "__main__":
+    main()

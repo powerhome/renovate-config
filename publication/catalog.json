@@ -1,0 +1,19 @@
+{
+  "gcr.io/distroless/static": null,
+  "gcr.io/distroless/static-debian12": null,
+  "ghcr.io/ahrtr/etcd-defrag": "users",
+  "ghcr.io/astral-sh/uv": "orgs",
+  "ghcr.io/berriai/litellm": "orgs",
+  "ghcr.io/berriai/litellm-helm": "orgs",
+  "ghcr.io/clickhouse/clickhouse-cluster-helm": "orgs",
+  "ghcr.io/clickhouse/clickhouse-operator": "orgs",
+  "ghcr.io/clickhouse/clickhouse-operator-helm": "orgs",
+  "ghcr.io/deliveryhero/helm-charts/node-problem-detector": "orgs",
+  "ghcr.io/donadiosolutions/gpubox": "users",
+  "ghcr.io/grafana/helm-charts/grafana-operator": "orgs",
+  "ghcr.io/langfuse/langfuse-k8s/charts/langfuse": "orgs",
+  "ghcr.io/mneverov/cluster-cidr-controller": "users",
+  "ghcr.io/rancher/local-path-provisioner/charts/local-path-provisioner": "orgs",
+  "public.ecr.aws/aws-cli/aws-cli": null,
+  "quay.io/podman/stable": null
+}
