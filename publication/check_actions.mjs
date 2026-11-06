@@ -86,6 +86,72 @@ const missingDigest = (await lookupUpdates(await cfg('v1.1.0', {packageName:'fix
 assert.equal(missingDigest.skipReason, 'invalid-value');
 assert.deepEqual(missingDigest.updates, []);
 results.push({case:'missing current-version release blocks digest update'});
+// Equivalent semantic versions must not lend a different exact tag their age.
+for (const [current, alternate] of [
+ ['v1.1.0', '1.1.0'],
+ ['v1.1.0', 'V1.1.0'],
+ ['1.1.0', 'v1.1.0'],
+ ['v1.1.0', 'v1.1'],
+ ['v1.1.0', 'v1.1.0+old'],
+ ['v1.1.0+new', 'v1.1.0+old'],
+ ['v1.1.0-rc.1', 'v1.1-rc.1'],
+]) {
+ const old='2020-01-01T00:00:00.000Z', fresh=new Date().toISOString();
+ tags=[{version:current,hash:'c'.repeat(40)},{version:alternate,hash:'b'.repeat(40)}];
+ const exact={version:current,releaseTimestamp:fresh};
+ const equivalent={version:alternate,releaseTimestamp:old};
+ for (const rows of [[equivalent,exact],[exact,equivalent]]) {
+  releases=rows; resetCache();
+  const result=(await lookupUpdates(await cfg(current,{currentValue:current,currentDigest:'8'.repeat(40)}))).unwrap();
+  assert.ifError(result.err);
+  assert.ok(result.val.updates.some(u=>u.updateType==='digest'&&u.newValue===current&&u.newDigest==='c'.repeat(40)&&u.pendingChecks), `fresh exact tag must wait: ${current} / ${alternate}`);
+ }
+ releases=[equivalent]; resetCache();
+ const missingExact=(await lookupUpdates(await cfg(current,{currentValue:current,currentDigest:'8'.repeat(40)}))).unwrap();
+ assert.ifError(missingExact.err);
+ assert.deepEqual(missingExact.val.updates,[], `missing exact Release must block: ${current} / ${alternate}`);
+ releases=[{...equivalent,releaseTimestamp:fresh},{...exact,releaseTimestamp:old}]; resetCache();
+ const oldExact=(await lookupUpdates(await cfg(current,{currentValue:current,currentDigest:'8'.repeat(40)}))).unwrap();
+ assert.ifError(oldExact.err);
+ assert.ok(oldExact.val.updates.some(u=>u.updateType==='digest'&&u.newValue===current&&u.newDigest==='c'.repeat(40)&&!u.pendingChecks), `old exact Release remains usable: ${current} / ${alternate}`);
+ results.push({case:'exact tag publication evidence isolated',current,alternate});
+}
+// Adding a first SHA pin requires the same exact-tag publication evidence.
+tags=[{version:'v1.1.0',hash:'c'.repeat(40)},{version:'1.1.0',hash:'b'.repeat(40)}];
+releases=[{version:'1.1.0',releaseTimestamp:'2020-01-01T00:00:00.000Z'},{version:'v1.1.0',releaseTimestamp:new Date().toISOString()}];
+resetCache();
+const pendingPin=(await lookupUpdates(await cfg('v1.1.0',{currentDigest:undefined}))).unwrap();
+assert.ifError(pendingPin.err);
+assert.ok(pendingPin.val.updates.some(u=>u.updateType==='pinDigest'&&u.newDigest==='c'.repeat(40)&&u.pendingChecks));
+releases=releases.filter(r=>r.version!=='v1.1.0'); resetCache();
+const missingPin=(await lookupUpdates(await cfg('v1.1.0',{currentDigest:undefined}))).unwrap();
+assert.ifError(missingPin.err);
+assert.deepEqual(missingPin.val.updates,[]);
+results.push({case:'initial SHA pin requires exact tag publication'});
+// Version upgrades retain their exact tag spelling and age their own Release.
+for (const [current, next, alternate] of [
+ ['v1.0.0','v1.1.0','1.1.0'],
+ ['1.0.0','1.1.0','v1.1.0'],
+ ['v1.0.0+build.1','v1.1.0+build.1','v1.1.0+build.2'],
+]) {
+ const old='2020-01-01T00:00:00.000Z', fresh=new Date().toISOString();
+ tags=[{version:current,hash:'1'.repeat(40)},{version:next,hash:'2'.repeat(40)},{version:alternate,hash:'3'.repeat(40)}];
+ releases=[{version:current,releaseTimestamp:old},{version:next,releaseTimestamp:fresh},{version:alternate,releaseTimestamp:old}];
+ resetCache();
+ const pending=(await lookupUpdates(await cfg(current,{currentValue:current}))).unwrap();
+ assert.ifError(pending.err);
+ assert.ok(pending.val.updates.some(u=>u.newValue===next&&u.newDigest==='2'.repeat(40)&&u.pendingChecks));
+ releases=[{version:current,releaseTimestamp:old},{version:next,releaseTimestamp:old},{version:alternate,releaseTimestamp:fresh}];
+ resetCache();
+ const mature=(await lookupUpdates(await cfg(current,{currentValue:current}))).unwrap();
+ assert.ifError(mature.err);
+ assert.ok(mature.val.updates.some(u=>u.newValue===next&&u.newDigest==='2'.repeat(40)&&!u.pendingChecks));
+ releases=releases.filter(r=>r.version!==next); resetCache();
+ const missingUpgrade=(await lookupUpdates(await cfg(current,{currentValue:current}))).unwrap();
+ assert.ifError(missingUpgrade.err);
+ assert.ok(!missingUpgrade.val.updates.some(u=>u.newValue===next||u.newValue===alternate));
+ results.push({case:'version upgrade uses exact published tag',current,next});
+}
 const tagRow=tagsAdapter.transform({version:'v1.0.0',target:{type:'Commit',oid:'1'.repeat(40),releaseTimestamp:'2020-01-01T00:00:00.000Z'}});
 assert.equal(tagRow.releaseTimestamp,'2020-01-01T00:00:00.000Z');
 const releaseRow=releasesAdapter.transform({version:'v1.0.0',releaseTimestamp:'2026-01-01T00:00:00.000Z',isDraft:false,isPrerelease:false,url:'https://example.com',id:1,name:null,description:null});

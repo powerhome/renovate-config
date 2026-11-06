@@ -2,13 +2,38 @@
   "description": "Require GitHub Release publication dates for third-party Actions pinned to complete semantic versions; preserve native handling of floating aliases and branches.",
   "packageRules": [
     {
-      "description": "Use published GitHub Releases while retaining the native Action tag-to-commit digest resolver.",
-      "matchManagers": ["github-actions"],
-      "matchDatasources": ["github-tags"],
-      "matchPackageNames": ["!/^powerhome\\//"],
-      "matchCurrentValue": "/^v?\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$/",
+      "description": "Use exact v-prefixed Release evidence while retaining native Actions versioning and SHA resolution.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDatasources": [
+        "github-tags"
+      ],
+      "matchPackageNames": [
+        "!/^powerhome\\//"
+      ],
+      "matchCurrentValue": "/^v\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$/",
       "overrideDatasource": "github-releases",
-      "minimumReleaseAgeBehaviour": "timestamp-required"
+      "minimumReleaseAgeBehaviour": "timestamp-required",
+      "extractVersion": "^(?<version>v\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?)$",
+      "versionCompatibility": "^(?<version>v?\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?)(?<compatibility>\\+[0-9A-Za-z.-]+)?$"
+    },
+    {
+      "description": "Use exact unprefixed Release evidence while retaining native Actions versioning and SHA resolution.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDatasources": [
+        "github-tags"
+      ],
+      "matchPackageNames": [
+        "!/^powerhome\\//"
+      ],
+      "matchCurrentValue": "/^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$/",
+      "overrideDatasource": "github-releases",
+      "minimumReleaseAgeBehaviour": "timestamp-required",
+      "extractVersion": "^(?<version>\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?)$",
+      "versionCompatibility": "^(?<version>v?\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?)(?<compatibility>\\+[0-9A-Za-z.-]+)?$"
     }
   ]
 }

@@ -6,7 +6,7 @@ Consumers must use the explicit branch URL `https://raw.githubusercontent.com/po
 
 This separates the reviewed publisher from feature-branch workflows. A bypass for the generic GitHub Actions App would also admit their `GITHUB_TOKEN`s. A personal access token introduces a user-owned publishing identity; a deploy key is a long-lived Git credential, and a deploy-key ruleset bypass admits all deploy keys on the repository. Both are possible alternatives, but neither improves this publisher's identity and token lifecycle. [GitHub credential types](https://docs.github.com/en/organizations/managing-programmatic-access-to-your-organization/github-credential-types)
 
-The App controls who can publish snapshots. It does not repair datasource age semantics. The separately identified Actions equivalent-Release timestamp issue must be resolved before relying on `publication-age-actions`.
+The App controls who can publish container snapshots. The Actions preset independently uses GitHub Release publication evidence; it does not depend on this data branch. See the tag-format constraints in [the Actions documentation](README.md#github-actions).
 
 ## Prerequisites
 
@@ -134,4 +134,4 @@ Record the run ID and inspect it with `gh run view <run-id> --repo powerhome/ren
 
 Verify the environment's denial separately: use a temporary branch version of the existing dispatchable workflow containing only a read-only, no-op job that references `publication-data`, without the workflow's `main` guard. It must be rejected by the environment branch policy. Do not include publishing commands or print credentials in this probe. A stock feature-branch run skipped by the `main` guard does not prove environment enforcement.
 
-Only then enable the container preset in a consumer and inspect its hosted Renovate results. Keep the Actions preset disabled until its equivalent-Release timestamp issue is resolved. Leave the PR's publication-permissions discussion open until an administrator has recorded the policy readback and successful hosted publication.
+Only then enable the container preset in a consumer and inspect its hosted Renovate results. The independent Actions preset has its own [Release and tag-format requirements](README.md#github-actions). Leave the PR's publication-permissions discussion open until an administrator has recorded the policy readback and successful hosted publication.
