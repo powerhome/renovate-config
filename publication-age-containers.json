@@ -54,7 +54,7 @@
         "gcr.io/distroless/static-debian12"
       ],
       "matchCurrentValue": "/^nonroot$/",
-      "versioning": "regex:^(?<major>)?nonroot$"
+      "versioning": "regex:^(?<major>0){0}nonroot$"
     }
   ]
 }
