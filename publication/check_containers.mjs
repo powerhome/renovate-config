@@ -22,6 +22,7 @@ const old = '2025-01-01T00:00:00Z';
 const normalize = getExpression(preset.customDatasources['nip-publication'].transformTemplates[1]);
 for (const values of [
   ['0.9.2', 'v0.9.2', '00.09.02'],
+  ['0.9.2', '0.09.2-', 'v0.9.2-'],
   ['1.2-alpine', 'v1.2-alpine', '01.02-alpine'],
   ['1.2rc1', 'v1.2rc1'],
   ['1.2-alpine-x', 'v01.02-alpine-x'],
@@ -76,7 +77,7 @@ assert.ok(missing.updates.length > 0);
 assert.ok(missing.updates.every(u => u.pendingChecks));
 // Docker considers v-prefixed and zero-padded numeric tags equal. Every exact
 // digest must wait for the newest publication in its equivalent-version group.
-for (const alias of ['v0.9.2', '00.09.02']) {
+for (const alias of ['v0.9.2', '00.09.02', '0.09.2-']) {
   const collisionReleases = [
     {version:alias, digest:digest('e'), releaseTimestamp:old},
     {version:'0.9.2', digest:digest('b'), releaseTimestamp:new Date().toISOString()},
@@ -96,11 +97,20 @@ assert.ok(stale.warnings.length > 0);
 const identityMismatch = await lookup(cfg, releases, {packageName:'ghcr.io/other/image'});
 assert.equal(identityMismatch.updates.length, 0);
 const nonrootCfg = await config('gcr.io/distroless/static-debian12', 'nonroot');
-assert.equal(nonrootCfg.versioning,'regex:^(?<major>0)?nonroot$');
 const nonroot = await lookup(nonrootCfg, [{version:'nonroot',digest:digest('d'),releaseTimestamp:old}]);
 assert.ok(nonroot.updates.some(u => u.updateType === 'digest' && u.newValue === 'nonroot' && u.newDigest === digest('d') && !u.pendingChecks));
 const youngNonroot = await lookup(nonrootCfg, [{version:'nonroot',digest:digest('d'),releaseTimestamp:new Date().toISOString()}]);
 assert.ok(youngNonroot.updates.some(u => u.updateType === 'digest' && u.pendingChecks));
+// A numeric-looking sibling must not lend its old timestamp to the exact alias.
+const nonrootCollisionReleases = [
+  {version:'0nonroot',digest:digest('e'),releaseTimestamp:old},
+  {version:'nonroot',digest:digest('d'),releaseTimestamp:new Date().toISOString()},
+];
+for (const ordered of [nonrootCollisionReleases, [...nonrootCollisionReleases].reverse()]) {
+  const collision = await lookup(nonrootCfg, ordered);
+  assert.ok(collision.updates.some(u => u.updateType === 'digest' && u.newValue === 'nonroot' && u.newDigest === digest('d') && u.pendingChecks));
+}
+
 const exempt = await config('ghcr.io/powerhome/example','1.0.0');
 assert.equal(exempt.datasource,'docker');
 const nativeDocker = getDatasourceFor('docker');

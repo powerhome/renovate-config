@@ -6,7 +6,7 @@
       "format": "json",
       "transformTemplates": [
         "($age := $toMillis($now()) - $toMillis(collectedAt); schemaVersion = 1 and packageName = \"{{packageName}}\" and $age >= 0 and $age <= 21600000 ? {\"releases\": releases} : $error(\"Missing, stale, or mismatched container publication snapshot\"))",
-        "($key := function($v) { ($parts := $split($replace($v, /^v/, \"\"), \"-\"); $match := $match($parts[0], /^(\\d+(?:\\.\\d+)*)(\\w*)$/); $exists($match) ? $string([$map($split($match.groups[0], \".\"), function($part) { $number($part) }), $match.groups[1], $join($parts[[1..$count($parts)]], \"-\")]) : $v) }; $groups := releases{$key(version): $}; {\"releases\": [$map(releases, function($row) { ($rows := $append([], $lookup($groups, $key($row.version))); $timestamp := $count($rows.releaseTimestamp) = $count($rows) ? $fromMillis($max($map($rows.releaseTimestamp, function($timestamp) { $toMillis($timestamp) }))); $merge([$sift($row, function($value, $name) { $name != \"releaseTimestamp\" }), {\"releaseTimestamp\": $timestamp}])) })]})"
+        "($key := function($v) { ($parts := $split($replace($v, /^v/, \"\"), \"-\"); $match := $match($parts[0], /^(\\d+(?:\\.\\d+)*)(\\w*)$/); $exists($match) ? $string([$map($split($match.groups[0], \".\"), function($part) { $number($part) }), $match.groups[1], $join($append([], $parts[[1..$count($parts)]]), \"-\")]) : $v) }; $groups := releases{$key(version): $}; {\"releases\": [$map(releases, function($row) { ($rows := $append([], $lookup($groups, $key($row.version))); $timestamp := $count($rows.releaseTimestamp) = $count($rows) ? $fromMillis($max($map($rows.releaseTimestamp, function($timestamp) { $toMillis($timestamp) }))); $merge([$sift($row, function($value, $name) { $name != \"releaseTimestamp\" }), {\"releaseTimestamp\": $timestamp}])) })]})"
       ]
     }
   },
@@ -54,7 +54,7 @@
         "gcr.io/distroless/static-debian12"
       ],
       "matchCurrentValue": "/^nonroot$/",
-      "versioning": "regex:^(?<major>0)?nonroot$"
+      "versioning": "regex:^(?<major>)?nonroot$"
     }
   ]
 }
