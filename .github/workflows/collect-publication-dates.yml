@@ -24,9 +24,11 @@ concurrency:
 jobs:
   collect:
     if: github.ref == 'refs/heads/main'
-    environment: publication-data
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
+      packages: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -37,16 +39,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PUBLICATION_READ_TOKEN || github.token }}
         run: python3 bin/collect_publication_dates.py --output "$RUNNER_TEMP/publication-feed"
-      - name: Create restricted publisher token
-        id: publisher
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        with:
-          client-id: ${{ vars.PUBLICATION_APP_CLIENT_ID }}
-          private-key: ${{ secrets.PUBLICATION_APP_PRIVATE_KEY }}
-          permission-contents: write
       - name: Publish snapshot branch
         env:
-          PUBLISH_TOKEN: ${{ steps.publisher.outputs.token }}
+          PUBLISH_TOKEN: ${{ github.token }}
         run: |
           # Configure the short-lived token in this step's process environment.
           export GIT_CONFIG_COUNT=1
