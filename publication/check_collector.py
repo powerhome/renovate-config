@@ -2,6 +2,7 @@
 
 import importlib.util
 from email.message import Message
+import http.client
 from io import BytesIO
 from pathlib import Path
 import unittest
@@ -16,6 +17,22 @@ collector = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(collector)
 DIGEST = "sha256:" + "a" * 64
 DATE = "2025-01-01T00:00:00Z"
+
+
+class WireSocket:
+    def __init__(self, raw):
+        self.raw = raw
+
+    def makefile(self, mode):
+        return BytesIO(self.raw)
+
+
+def wire_response(declared, payload):
+    # A real http.client response parsed from raw bytes, without a network.
+    response = http.client.HTTPResponse(WireSocket(
+        b"HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n%s" % (declared, payload)))
+    response.begin()
+    return response
 
 
 class CollectorTest(unittest.TestCase):
@@ -83,7 +100,12 @@ class CollectorTest(unittest.TestCase):
         self.assertEqual(len(collector.collect("ghcr.io/owner/image", "users", get)), 1)
 
     def test_transient_network_failures_retry_and_remain_bounded(self):
-        for error in [URLError("temporary DNS failure"), TimeoutError("timed out")]:
+        for error in [
+            URLError("temporary DNS failure"), TimeoutError("timed out"),
+            ConnectionResetError("connection reset"),
+            http.client.RemoteDisconnected("closed without response"),
+            http.client.IncompleteRead(b"{", 10),
+        ]:
             with self.subTest(error=type(error).__name__):
                 with patch.object(collector, "urlopen", side_effect=[error, BytesIO(b'{}')]) as request, \
                         patch.object(collector.time, "sleep") as sleep:
@@ -96,6 +118,27 @@ class CollectorTest(unittest.TestCase):
                         collector.fetch("https://quay.io/api/v1/test")
                     self.assertEqual(request.call_count, 3)
                     self.assertEqual(sleep.call_count, 2)
+
+    def test_truncated_body_retries_and_oversized_body_does_not(self):
+        with patch.object(collector, "urlopen", side_effect=[
+            wire_response(20, b'{"a": 1'), wire_response(8, b'{"a": 1}'),
+        ]) as request, patch.object(collector.time, "sleep") as sleep:
+            self.assertEqual(collector.fetch("https://quay.io/api/v1/test"), {"a": 1})
+            self.assertEqual(request.call_count, 2)
+            sleep.assert_called_once_with(1)
+        with patch.object(collector, "urlopen",
+                          side_effect=lambda *args, **kwargs: wire_response(20, b'{"a": 1')) as request, \
+                patch.object(collector.time, "sleep") as sleep:
+            with self.assertRaises(http.client.IncompleteRead):
+                collector.fetch("https://quay.io/api/v1/test")
+            self.assertEqual(request.call_count, 3)
+        with patch.object(collector, "MAX_BODY", 4), \
+                patch.object(collector, "urlopen", return_value=wire_response(8, b'{"a": 1}')) as request, \
+                patch.object(collector.time, "sleep") as sleep:
+            with self.assertRaisesRegex(ValueError, "size limit"):
+                collector.fetch("https://quay.io/api/v1/test")
+            self.assertEqual(request.call_count, 1)
+            sleep.assert_not_called()
 
     def test_rate_limit_retry_obeys_server_delay(self):
         cases = [

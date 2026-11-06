@@ -5,6 +5,7 @@ import argparse
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
+import http.client
 import json
 import os
 from pathlib import Path
@@ -61,6 +62,11 @@ def fetch(url, body=None):
                 body = response.read(MAX_BODY + 1)
                 if len(body) > MAX_BODY:
                     raise ValueError("registry response exceeds size limit")
+                # read(n) returns a short body without raising; retry it as a
+                # network failure. The size check above runs first so oversized
+                # responses still fail without a retry.
+                if getattr(response, "length", None):
+                    raise http.client.IncompleteRead(body, response.length)
                 return json.loads(body)
         except HTTPError as error:
             error.close()
@@ -85,7 +91,7 @@ def fetch(url, body=None):
             # Fail this collection rather than ignoring a long server cooldown.
             if delay > MAX_RETRY_WAIT:
                 raise
-        except (URLError, TimeoutError):
+        except (URLError, TimeoutError, ConnectionError, http.client.HTTPException):
             if attempt == 2:
                 raise
             delay = 2 ** attempt
