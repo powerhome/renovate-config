@@ -1,0 +1,39 @@
+{
+  "packageRules": [
+    {
+      "description": "Group minor and patch updates to runtime libraries. Later rules move development tooling and images out of this group.",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": ["*"],
+      "groupName": "non-major runtime dependencies",
+      "groupSlug": "non-major-runtime"
+    },
+    {
+      "description": "Group minor and patch updates to development, test and CI tooling apart from runtime libraries.",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchDepTypes": [
+        "devDependencies",
+        "dependency-groups",
+        "tool.uv.dev-dependencies",
+        "tool.pdm.dev-dependencies",
+        "development",
+        "test"
+      ],
+      "groupName": "non-major development dependencies",
+      "groupSlug": "non-major-development"
+    },
+    {
+      "description": "CI workflows and pre-commit hooks are development tooling too.",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchManagers": ["github-actions", "pre-commit"],
+      "groupName": "non-major development dependencies",
+      "groupSlug": "non-major-development"
+    },
+    {
+      "description": "Group minor and patch updates to container images and Helm charts, such as datastores and exporters, apart from libraries.",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchDatasources": ["docker", "helm"],
+      "groupName": "non-major images and charts",
+      "groupSlug": "non-major-images"
+    }
+  ]
+}
