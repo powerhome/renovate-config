@@ -166,6 +166,19 @@ If a repo only has one of the two, that one is updated on its own — no extra e
 
 Usage: `"extends": ["github>powerhome/renovate-config:group-ruby-version"]`
 
+## group-non-major-by-type
+Groups minor and patch updates like Renovate's `group:allNonMajor`, but into three PRs by kind of dependency instead of one, so a PR mixes neither runtime libraries with test tooling nor libraries with datastore images:
+
+- **non-major runtime dependencies**: everything not matched below, such as `[project.dependencies]`, npm `dependencies` and ungrouped gems.
+- **non-major development dependencies**: PEP 735 `[dependency-groups]`, uv and PDM dev dependencies, npm `devDependencies`, Bundler `development` and `test` groups, GitHub Actions and pre-commit hooks.
+- **non-major images and charts**: anything from the Docker or Helm datasources
+
+Major updates keep one PR each.
+
+Extend it **before** `default` or `pac`. Its rules match every package, so anything extended after it, including the repository's own `packageRules`, takes precedence; extending it first keeps the specific groups in `default`, such as `group-ruby-version`, `group-playbook` and the Percona presets, intact. A repository's own groups, such as one for GitHub Actions, still apply on top.
+
+Usage: `"extends": ["github>powerhome/renovate-config:group-non-major-by-type", "github>powerhome/renovate-config"]`
+
 ## add-labels
 Adds standard label(s) to Renovate PRs.
 
