@@ -166,6 +166,13 @@ If a repo only has one of the two, that one is updated on its own — no extra e
 
 Usage: `"extends": ["github>powerhome/renovate-config:group-ruby-version"]`
 
+## group-playbook
+Groups updates to Playbook's `playbook_ui` gem and `playbook-ui` npm package into a single PR. The Rails helpers and the React components ship from the same release, so updating one without the other leaves the app rendering two different versions of the design system. `default` extends this preset.
+
+Both packages are only grouped when one Renovate run manages both. A repository that splits Bundler and npm updates between two Renovate instances still gets one PR per instance.
+
+Usage: `"extends": ["github>powerhome/renovate-config:group-playbook"]`
+
 ## add-labels
 Adds standard label(s) to Renovate PRs.
 
