@@ -171,7 +171,7 @@ Groups minor and patch updates like Renovate's `group:allNonMajor`, but into thr
 
 - **non-major runtime dependencies**: everything not matched below, such as `[project.dependencies]`, npm `dependencies` and ungrouped gems.
 - **non-major development dependencies**: PEP 735 `[dependency-groups]`, uv and PDM dev dependencies, npm `devDependencies`, Bundler `development` and `test` groups, GitHub Actions and pre-commit hooks.
-- **non-major images and charts**: anything from the Docker or Helm datasources, including datastore and exporter images.
+- **non-major images and charts**: anything from the Docker or Helm datasources
 
 Major updates keep one PR each.
 
