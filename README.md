@@ -183,6 +183,21 @@ Extend it **before** `default` or `pac`. Its rules match every package, so anyth
 
 Usage: `"extends": ["github>powerhome/renovate-config:group-non-major-by-type", "github>powerhome/renovate-config"]`
 
+## group-playbook
+Updates Playbook's `playbook_ui` gem and `playbook-ui` npm package in a single PR. The Rails helpers and the React components ship from the same release, so updating one without the other leaves the app rendering two different versions of the design system. Major updates go in the same PR as minor ones, so a gem that has drifted a major behind the npm package still moves with it. `default` extends this preset.
+
+Grouping puts both updates in one PR, but it does not make their versions match: each package still moves to its own latest allowed version. The PR can pair different versions when:
+
+- one registry publishes a release before the other;
+- a repository allows prereleases, which the two registries name differently (`14.1.0.pre.alpha1` for the gem, `14.1.0-alpha.1` for npm);
+- only one package is exempt from the release-age cooldown. Each exemption only applies when that package is looked up on Power's trusted registry alone, so a Gemfile with a second global source keeps `playbook_ui` on the cooldown while `playbook-ui` is exempt. The PR then opens with the npm package, and the gem joins it once its cooldown ends.
+
+Check that both packages are on the same version before merging.
+
+Both packages are only grouped when one Renovate run manages both. A repository that splits Bundler and npm updates between two Renovate instances still gets one PR per instance.
+
+Usage: `"extends": ["github>powerhome/renovate-config:group-playbook"]`
+
 ## add-labels
 Adds standard label(s) to Renovate PRs.
 
