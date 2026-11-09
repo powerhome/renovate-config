@@ -1,0 +1,11 @@
+{
+  "packageRules": [
+    {
+      "description": "Upgrade Playbook's gem and npm package in one PR. The Rails helpers and the React components ship from the same release. Majors stay in the same PR as minors, so a gem one major behind the npm package still updates with it.",
+      "matchPackageNames": ["playbook_ui", "playbook-ui"],
+      "groupName": "Playbook",
+      "commitMessageTopic": "Playbook",
+      "separateMajorMinor": false
+    }
+  ]
+}
