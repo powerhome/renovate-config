@@ -191,6 +191,15 @@ The rule is scoped to the rendered path for the same reason, and covers every de
 
 Usage: `"extends": ["github>powerhome/renovate-config:ignore-reviewdog-action"]`
 
+## ignore-software-managed-files
+Stops Renovate touching workflows that terraform in [powerhome/software](https://github.com/powerhome/software/tree/main/modules/github-repo) renders into repos. Those workflows are named `.github/workflows/managed-*`, a prefix reserved for them, so this matches by filename alone and needs no list of repos or files to keep current.
+
+Merging a Renovate bump of one of those files brings the repo out of compliance with the Software repo's state, and the nightly drift check then opens a PR reverting it. The templates in powerhome/software get the same bumps from that repo's own Renovate, and the next apply rolls them out. A repo's own workflows, including any it maintains by hand under a name terraform does not use, keep their updates.
+
+Do not name a hand-maintained workflow with the `managed-` prefix: Renovate will not update it.
+
+Usage: `"extends": ["github>powerhome/renovate-config:ignore-software-managed-files"]`
+
 ## throttle-claude-code-action
 Batches `anthropics/claude-code-action` updates into a single PR that Renovate only opens on the first of the month.
 
