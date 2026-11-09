@@ -1,0 +1,67 @@
+{
+  "packageRules": [
+    {
+      "description": "Group minor and patch updates to runtime libraries. Later rules move development tooling, images and language toolchains out of this group.",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": ["*"],
+      "groupName": "non-major runtime dependencies",
+      "groupSlug": "non-major-runtime"
+    },
+    {
+      "description": "Group minor and patch updates to development, test and CI tooling apart from runtime libraries.",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchDepTypes": [
+        "devDependencies",
+        "dependency-groups",
+        "tool.uv.dev-dependencies",
+        "tool.pdm.dev-dependencies",
+        "tool.hatch.envs.*",
+        "development",
+        "test"
+      ],
+      "groupName": "non-major development dependencies",
+      "groupSlug": "non-major-development"
+    },
+    {
+      "description": "Poetry and Pipenv name their dependency types after the project's own groups, such as `lint` or `docs`, so match everything but the runtime ones.",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchManagers": ["poetry", "pipenv"],
+      "matchDepTypes": ["!dependencies", "!extras", "!project.dependencies", "!project.optional-dependencies", "!build-system.requires", "!packages"],
+      "groupName": "non-major development dependencies",
+      "groupSlug": "non-major-development"
+    },
+    {
+      "description": "CI workflows and pre-commit hooks are development tooling too.",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchManagers": ["github-actions", "pre-commit"],
+      "groupName": "non-major development dependencies",
+      "groupSlug": "non-major-development"
+    },
+    {
+      "description": "Group minor and patch updates to container images and Helm charts, such as datastores and exporters, apart from libraries. custom.nip-publication is where publication-age-containers moves the images and charts it ages.",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchDatasources": ["docker", "helm", "custom.nip-publication"],
+      "groupName": "non-major images and charts",
+      "groupSlug": "non-major-images"
+    },
+    {
+      "description": "Versions pinned inside a Dockerfile, such as ENV and ARG pins, are part of the image, so review them with its base image.",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchFileNames": ["**/Dockerfile", "**/Dockerfile.*"],
+      "groupName": "non-major images and charts",
+      "groupSlug": "non-major-images"
+    },
+    {
+      "description": "Upgrade Node.js in one PR: .nvmrc, engines, setup-node and the node image move together.",
+      "matchDepNames": ["node"],
+      "groupName": "node version",
+      "commitMessageTopic": "Node.js"
+    },
+    {
+      "description": "Upgrade Python in one PR: .python-version, requires-python, setup-python and the python image move together.",
+      "matchDepNames": ["python"],
+      "groupName": "python version",
+      "commitMessageTopic": "Python"
+    }
+  ]
+}

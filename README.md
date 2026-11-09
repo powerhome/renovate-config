@@ -166,6 +166,23 @@ If a repo only has one of the two, that one is updated on its own — no extra e
 
 Usage: `"extends": ["github>powerhome/renovate-config:group-ruby-version"]`
 
+## group-non-major-by-type
+Groups minor and patch updates like Renovate's `group:allNonMajor`, but into three PRs by kind of dependency instead of one, so a PR mixes neither runtime libraries with test tooling nor libraries with datastore images:
+
+- **non-major runtime dependencies**: everything not matched below, such as `[project.dependencies]`, npm `dependencies` and ungrouped gems.
+- **non-major development dependencies**: PEP 735 `[dependency-groups]`, uv and PDM dev dependencies, Hatch environments, every Poetry group but the main one, Pipenv `[dev-packages]` and other Pipenv categories, npm `devDependencies`, Bundler `development` and `test` groups, GitHub Actions and pre-commit hooks.
+- **non-major images and charts**: anything from the Docker or Helm datasources, including those `publication-age-containers` ages, plus anything else pinned in a `Dockerfile`, such as `ENV` and `ARG` versions, so it is reviewed with the base image it is built into.
+
+Node.js and Python versions are grouped by toolchain instead, like `group-ruby-version` and `group-go` do for Ruby and Go: `.nvmrc`, `engines.node`, `actions/setup-node` and the `node` image move in one PR, as do `.python-version`, `requires-python`, `actions/setup-python` and the `python` image. This applies to major updates too. Everything else keeps one PR per major update.
+
+Bundler only reports a gem's group for gems inside a `group :test do` block. A gem declared with an inline option, `gem "rspec-rails", group: [:development, :test]`, or in a parenthesised `group(:development, :test) do` block has no group as far as Renovate can tell, and goes in the runtime PR. Use the block form for development and test gems.
+
+Debian and Ubuntu package pins from `os-package-versions` keep their per-release groups, such as `debian 12 packages`, because `default` extends that preset after this one.
+
+Extend it **before** `default` or `pac`. Its rules match every package, so anything extended after it, including the repository's own `packageRules`, takes precedence; extending it first keeps the specific groups in `default`, such as `group-ruby-version`, `group-playbook` and the Percona presets, intact. A repository's own groups, such as one for GitHub Actions, still apply on top.
+
+Usage: `"extends": ["github>powerhome/renovate-config:group-non-major-by-type", "github>powerhome/renovate-config"]`
+
 ## group-playbook
 Updates Playbook's `playbook_ui` gem and `playbook-ui` npm package in a single PR. The Rails helpers and the React components ship from the same release, so updating one without the other leaves the app rendering two different versions of the design system. Major updates go in the same PR as minor ones, so a gem that has drifted a major behind the npm package still moves with it. `default` extends this preset.
 
