@@ -1,0 +1,24 @@
+{
+    "description": "Exempt known Powerhome gem identities declared in gemspecs only when no registry route is configured.",
+    "matchManagers": [
+        "gemspec"
+    ],
+    "matchDatasources": [
+        "rubygems"
+    ],
+    "matchPackageNames": [
+        "playbook_ui",
+        "nitro_intelligence",
+        "omniauth-nitro-id",
+        "rubocop-powerhome",
+        "data_taster",
+        "dep_shield",
+        "lumberaxe",
+        "nitro_config",
+        "cobra_commander"
+    ],
+    "matchJsonata": [
+        "$count(registryUrls[$]) = 0 and $count(defaultRegistryUrls[$]) = 0 and $count(additionalRegistryUrls[$]) = 0"
+    ],
+    "minimumReleaseAge": null
+}

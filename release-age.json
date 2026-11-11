@@ -47,6 +47,11 @@
     },
     {
       "extends": [
+        "powerhome/renovate-config:powerhome-release-age-rubygems-gemspec"
+      ]
+    },
+    {
+      "extends": [
         "powerhome/renovate-config:powerhome-release-age-docker-hub"
       ]
     },
