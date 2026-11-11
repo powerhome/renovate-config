@@ -41,6 +41,11 @@ Exempts known Powerhome gem identities only when the existing lookup registry is
 
 Usage within `packageRules`: `"extends": ["github>powerhome/renovate-config:powerhome-release-age-rubygems"]`
 
+## powerhome-release-age-rubygems-gemspec
+Exempts the same known Powerhome gem identities when the `gemspec` manager declares them. A gemspec has no `source`, so Renovate sets no `registryUrls` on these dependencies and looks them up on RubyGems.org, the datasource default. The rule applies only when `registryUrls`, `defaultRegistryUrls` and `additionalRegistryUrls` are all empty or absent; any configured alternate route keeps the normal cooldown. Keep its package list in step with `powerhome-release-age-rubygems`.
+
+Usage within `packageRules`: `"extends": ["github>powerhome/renovate-config:powerhome-release-age-rubygems-gemspec"]`
+
 ## powerhome-release-age-docker-hub
 Exempts the Powerhome Docker Hub namespace when the existing lookup registry is explicitly Docker Hub. It does not redirect a configured mirror.
 
