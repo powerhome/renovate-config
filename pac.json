@@ -31,10 +31,11 @@
       "extends": ["schedule:monthly"]
     },
     {
-      "description": "Do not pin or bump powerhome/argo-diff action references. They float on @main so consumers always run the latest version, and so argo-diff's own references to its composite actions do not cause an endless digest-bump loop.",
+      "description": "Pin powerhome/argo-diff action references to SHAs and propose updates as soon as they're out, in their own PR, so consumers stay current.",
       "matchManagers": ["github-actions"],
       "matchDepNames": ["powerhome/argo-diff"],
-      "enabled": false
+      "groupName": "argo-diff",
+      "schedule": ["at any time"]
     },
     {
       "description": "Keep the kind node image on the same Kubernetes minor as the PAC clusters. Raise when the fleet moves to a newer minor.",
