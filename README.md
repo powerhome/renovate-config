@@ -164,6 +164,13 @@ RUN apt-get update && \
     apt-get clean
 ```
 
+## keep-gem-ranges
+`default` extends this preset. It overrides `default`'s `"rangeStrategy": "pin"` for the `bundler` and `gemspec` managers with `update-lockfile`. Ranges in a `Gemfile` or `*.gemspec` stay as written, and Renovate updates `Gemfile.lock` while the new version satisfies the range, and replaces the range only when it doesn't.
+
+Gemspecs should declare ranges, since exact versions there constrain every app that installs the gem, and a Gemfile range is a deliberate choice that `Gemfile.lock` already pins. Renovate also can't currently pin a quoted gem range: the pinned value loses its quotes and the whole grouped "Pin dependencies" branch fails, taking every other pin in it with it ([renovatebot/renovate#48003](https://github.com/renovatebot/renovate/discussions/48003)).
+
+Usage: `"extends": ["github>powerhome/renovate-config:keep-gem-ranges"]`
+
 ## group-ruby-version
 Groups Ruby version updates from a Dockerfile base image and a `.tool-versions` file into a single PR, so both stay in sync.
 
