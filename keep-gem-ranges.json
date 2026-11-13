@@ -1,7 +1,7 @@
 {
   "packageRules": [
     {
-      "description": "Keep version ranges in Gemfiles and gemspecs, and update Gemfile.lock instead. Pinning a gem range fails and takes the whole grouped pin branch down with it (https://github.com/renovatebot/renovate/discussions/48003), and a gemspec should declare ranges, not exact versions.",
+      "description": "Keep version ranges in Gemfiles and gemspecs, and update Gemfile.lock instead. A gemspec should declare ranges, not exact versions, and Gemfile.lock already pins Gemfile ranges. Renovate also can't currently pin a quoted gem range without failing the whole grouped pin branch (https://github.com/renovatebot/renovate/discussions/48003).",
       "matchManagers": ["bundler", "gemspec"],
       "rangeStrategy": "update-lockfile"
     }
