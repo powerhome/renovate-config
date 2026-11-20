@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Run collector protocol fixtures
         run: python3 -m unittest publication/check_collector.py
 
@@ -46,7 +46,7 @@ jobs:
       image: renovate/renovate:44.198.0@sha256:15ee7727b68a54cae567171dcf14f279023c110da5825d85fdfb2b4c5751c5aa
       options: --user 0
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Check generated publication allowlist
         run: python3 bin/generate_publication_preset.py --check
       - name: Validate Renovate presets
