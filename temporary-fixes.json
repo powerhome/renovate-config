@@ -8,7 +8,7 @@
     {
       "matchPackageNames": ["ghcr.io/grafana/grafana-operator"],
       "allowedVersions": "<5.25.0",
-      "description": "See https://github.com/powerhome/milano/pull/1867"
+      "description": "See https://github.com/powerhome/milano/pull/1867 and https://runway.powerhrg.com/backlog_items/GOG-2269"
     }
   ]
 }
