@@ -1,0 +1,9 @@
+{
+  "packageRules": [
+    {
+      "description": "Workflows that terraform in powerhome/software renders into repos are named with the reserved `managed-` prefix. Scope this to that prefix rather than to the packages they use, so the templates they are rendered from stay updatable and a repo's own workflows using the same actions are left alone.",
+      "matchFileNames": [".github/workflows/managed-*"],
+      "enabled": false
+    }
+  ]
+}

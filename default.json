@@ -15,6 +15,7 @@
         "powerhome/renovate-config:percona-pxc-versions",
         "powerhome/renovate-config:percona-postgresql-versions",
         "powerhome/renovate-config:ignore-reviewdog-action",
+        "powerhome/renovate-config:ignore-software-managed-files",
         "powerhome/renovate-config:throttle-claude-code-action",
         "powerhome/renovate-config:keep-gem-ranges",
         "powerhome/renovate-config:release-age(3)"
