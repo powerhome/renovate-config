@@ -6,7 +6,10 @@
       "description": "See https://github.com/powerhome/pac/pull/1983"
     },
     {
-      "matchPackageNames": ["ghcr.io/grafana/grafana-operator"],
+      "matchPackageNames": [
+        "ghcr.io/grafana/grafana-operator",
+        "ghcr.io/grafana/helm-charts/grafana-operator"
+      ],
       "allowedVersions": "<5.25.0",
       "description": "See https://github.com/powerhome/milano/pull/1867 and https://runway.powerhrg.com/backlog_items/GOG-2269"
     }
